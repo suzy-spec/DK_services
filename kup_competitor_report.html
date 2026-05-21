@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>경쟁사 분석 — KuP Express 서비스 테스트 리포트</title>
+<style>
+  body { background-color: #f9f9fa; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  .nav-header { position: fixed; top: 0; width: 100%; background: #fff; border-bottom: 1px solid #e0e0e0; z-index: 1000; display: flex; justify-content: center; padding: 12px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+  .nav-tabs { display: flex; gap: 10px; width: 90%; max-width: 860px; }
+  .nav-tab { flex: 1; padding: 12px 10px; border: 1.5px solid #FF7A00; background: #fff; color: #FF7A00; border-radius: 8px; font-weight: 700; font-size: 14px; cursor: pointer; text-align: center; transition: 0.2s; word-break: keep-all; }
+  .nav-tab.active { background: #FF7A00; color: #fff; }
+  .container { max-width: 860px; margin: 80px auto 60px; padding: 0 20px; }
+  .page { display: none; animation: fadeIn 0.3s ease; }
+  .page.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root {
+    --color-text-primary: #111;
+    --color-text-secondary: #333;
+    --color-text-tertiary: #666;
+    --color-background-primary: #fff;
+    --color-background-secondary: #f7f7f7;
+    --color-border-secondary: #eee;
+    --color-border-tertiary: #e5e5e5;
+    --border-radius-lg: 12px;
+    --border-radius-md: 8px;
+    --orange: #FF7A00;
+  }
+  .wrap{padding:1.5rem 0}
+  .sec-label{font-size:14px;font-weight:700;letter-spacing:.05em;color:#FF7A00;margin-bottom:1.25rem;padding-bottom:.5rem;border-bottom:2px solid #FF7A00}
+  .card{background:var(--color-background-primary);border:.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1.25rem;margin-bottom:1rem;box-shadow:0 2px 8px rgba(0,0,0,0.04)}
+  .svc-head{display:flex;align-items:center;gap:10px;margin-bottom:1rem;padding-bottom:1rem;border-bottom:.5px solid var(--color-border-tertiary)}
+  .badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 8px;border-radius:20px;margin-right:4px}
+  .b-blue{background:#E6F1FB;color:#0C447C}
+  .b-teal{background:#E1F5EE;color:#085041}
+  .b-gray{background:#F1EFE8;color:#2C2C2A}
+  .b-amber{background:#FAEEDA;color:#633806}
+  .b-red{background:#FAECE7;color:#993C1D}
+  .b-orange{background:#FFF0E0;color:#B05000}
+  .num{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+  .n1{background:#E6F1FB;color:#0C447C}
+  .n2{background:#E1F5EE;color:#085041}
+  .n3{background:#FAEEDA;color:#633806}
+  .svc-title{font-size:16px;font-weight:700;color:var(--color-text-primary)}
+  .svc-sub{font-size:12px;color:var(--color-text-tertiary);margin-top:4px}
+  .row{display:flex;gap:12px;margin-bottom:8px;align-items:flex-start}
+  .rl{font-size:13px;font-weight:600;color:var(--color-text-tertiary);min-width:90px;padding-top:1px;flex-shrink:0}
+  .rv{font-size:13px;color:var(--color-text-primary);line-height:1.6;flex:1}
+  .sub-card{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.875rem;margin-bottom:.75rem}
+  .sub-title{font-size:13px;font-weight:600;color:var(--color-text-secondary);margin-bottom:.5rem}
+  .di{display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;font-size:12px;color:var(--color-text-primary);line-height:1.5}
+  .dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:5px}
+  .dt{background:#1D9E75}
+  .db{background:#378ADD}
+  .do{background:#FF7A00}
+  .dr{background:#D94F3B}
+  .hl{border-left:3px solid #1D9E75;padding:.75rem;margin-top:.75rem;background:#f9fdfb}
+  .hl-blue{border-left-color:#378ADD;background:#f8fbff}
+  .hl-amber{border-left-color:#F5A623;background:#fffbf4}
+  .hl-red{border-left-color:#D94F3B;background:#fff8f7}
+  .hl-title{font-size:13px;font-weight:600;margin-bottom:6px}
+  .hl .hl-title{color:#085041}
+  .hl-blue .hl-title{color:#185FA5}
+  .hl-amber .hl-title{color:#7A4800}
+  .hl-red .hl-title{color:#993C1D}
+  .hl-body{font-size:13px;color:var(--color-text-primary);line-height:1.7}
+
+  /* 타임라인 스텝 */
+  .steps{display:flex;flex-direction:column}
+  .step{display:grid;grid-template-columns:28px 1fr;gap:16px;align-items:stretch}
+  .step-left{display:flex;flex-direction:column;align-items:center}
+  .step-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+  .sd-blue{background:#E6F1FB;border:1px solid #B5D4F4;color:#0C447C}
+  .sd-teal{background:#E1F5EE;border:1px solid #9FE1CB;color:#085041}
+  .sd-amber{background:#FAEEDA;border:1px solid #FAC775;color:#633806}
+  .sd-gray{background:#F1EFE8;border:1px solid #D3D1C7;color:#2C2C2A}
+  .step-line{flex:1;width:2px;background:var(--color-border-tertiary);margin:4px auto}
+  .step-content{padding-bottom:16px}
+  .step-title{font-size:14px;font-weight:600;color:var(--color-text-primary);margin-bottom:4px}
+  .step-desc{font-size:13px;color:var(--color-text-secondary);line-height:1.6}
+  .step-time{font-size:11px;font-weight:700;color:#FF7A00;margin-bottom:4px}
+
+  /* 상태 태그 */
+  .sf{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:.75rem}
+  .sc{font-size:12px;padding:4px 12px;border-radius:20px;border:1px solid;font-weight:500}
+  .sc-blue{background:#E6F1FB;border-color:#B5D4F4;color:#0C447C}
+  .sc-teal{background:#E1F5EE;border-color:#9FE1CB;color:#085041}
+  .sc-gray{background:#F1EFE8;border-color:#D3D1C7;color:#2C2C2A}
+  .sc-amber{background:#FAEEDA;border-color:#FAC775;color:#633806}
+  .sc-coral{background:#FAECE7;border-color:#F5C4B3;color:#993C1D}
+  .arr{color:var(--color-text-tertiary);font-size:12px}
+  
+  /* 평가 그리드 */
+  .eval-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:1rem}
+  .eval-card{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.875rem}
+  .eval-label{font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--color-text-tertiary);margin-bottom:.5rem}
+  .eval-val{font-size:22px;font-weight:800;color:var(--color-text-primary);margin-bottom:2px}
+  .eval-desc{font-size:12px;color:var(--color-text-tertiary);line-height:1.5}
+
+  /* 비교 테이블 */
+  .compare-table{width:100%;border-collapse:collapse;margin-top:.75rem;font-size:13px}
+  .compare-table th{background:#f7f7f7;font-weight:600;padding:.6rem .75rem;border-bottom:1.5px solid #e5e5e5;text-align:left;color:#444}
+  .compare-table td{padding:.65rem .75rem;border-bottom:1px solid #f0f0f0;vertical-align:top;line-height:1.55}
+  .compare-table tr:last-child td{border-bottom:none}
+  .win{color:#085041;font-weight:600}
+  .lose{color:#993C1D}
+  .neutral{color:#633806}
+  
+  /* 시사점 카드 */
+  .insight-card{border-radius:var(--border-radius-md);padding:1rem;margin-bottom:.75rem}
+  .ic-green{background:#f0fdf8;border-left:4px solid #1D9E75}
+  .ic-blue{background:#f0f7ff;border-left:4px solid #378ADD}
+  .ic-amber{background:#fffbf0;border-left:4px solid #F5A623}
+  .ic-red{background:#fff5f3;border-left:4px solid #D94F3B}
+  .insight-num{font-size:10px;font-weight:800;letter-spacing:.08em;margin-bottom:.4rem}
+  .insight-title{font-size:14px;font-weight:700;color:var(--color-text-primary);margin-bottom:.4rem}
+  .insight-body{font-size:13px;color:var(--color-text-secondary);line-height:1.7}
+  
+  /* 메타 배지 */
+  .meta-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem}
+  .meta-badge{font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;background:#f1f1f1;color:#444}
+
+  .flow-label{font-size:12px;font-weight:600;color:var(--color-text-tertiary);margin-bottom:1rem;margin-top:1rem;display:flex;align-items:center;gap:6px}
+  .flow-label:before{content:'';display:inline-block;width:3px;height:13px;border-radius:2px;background:var(--color-border-secondary)}
+
+  .section-gap{margin-top:1.5rem}
+  
+  /* 요약 상단 박스 */
+  .summary-box{background:linear-gradient(135deg,#fff8f0,#fff);border:1px solid #ffd9b3;border-radius:var(--border-radius-lg);padding:1.25rem;margin-bottom:1.25rem}
+  .summary-box h2{font-size:15px;font-weight:700;color:#B05000;margin-bottom:.5rem}
+  .summary-box p{font-size:13px;color:#444;line-height:1.7}
+</style>
+</head>
+<body>
+
+<nav class="nav-header">
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage(1)">Part 1. 진행목적·배경</button>
+    <button class="nav-tab" onclick="showPage(2)">Part 2. 테스트 진행</button>
+    <button class="nav-tab" onclick="showPage(3)">Part 3. 시사점</button>
+  </div>
+</nav>
+
+<div class="container">
+
+  <!-- ====== PART 1 ====== -->
+  <div id="page1" class="page active">
+    <div class="wrap">
+      <p class="sec-label">Part 1 — 진행목적 및 배경</p>
+
+      <div class="summary-box">
+        <h2>🔍 리포트 개요</h2>
+        <p>경쟁사 KuP Express의 호텔 당일배송 서비스를 직접 테스트하여, DK Korea local delivery 서비스 기획에 참고할 수 있는 실사용 데이터와 인사이트를 도출하기 위해 작성된 내부 분석 보고서입니다.</p>
+      </div>
+
+      <div class="card">
+        <div class="svc-head">
+          <div class="num n1">1</div>
+          <div>
+            <div class="svc-title">테스트 진행 목적</div>
+            <div class="svc-sub">왜 이 서비스를 직접 테스트했는가</div>
+          </div>
+        </div>
+        <div class="row"><span class="rl">핵심 목적</span><span class="rv">DK가 기획·운영 중인 'Korea local delivery(호텔 배송)' 서비스와 직접 경쟁 관계에 있는 KuP Express의 실제 고객 경험을 내부적으로 체험하고, 벤치마킹 포인트와 차별화 전략을 도출</span></div>
+        <div class="row"><span class="rl">조사 방법</span><span class="rv">실사용자 2인(결제 담당 / 배송 픽업 담당)을 통한 서비스 직접 테스트 + Q&A 인터뷰 방식으로 정성적 데이터 수집</span></div>
+        <div class="row"><span class="rl">테스트 일시</span><span class="rv">2026년 5월 14일 (주문 결제) — 2026년 5월 15일 (물품 수령)</span></div>
+        <div class="row"><span class="rl">테스트 장소</span><span class="rv">서울 강서구 마곡동 — 더퍼스트스테이호텔</span></div>
+
+        <div class="hl hl-blue section-gap">
+          <div class="hl-title">🎯 조사 포인트 3가지</div>
+          <div class="hl-body">
+            <div class="di"><span class="dot db"></span><span><strong>결제 프로세스</strong> — 해외 카드 지원 여부, 결제 UX, 최소 주문 금액 등 실사용 결제 환경 점검</span></div>
+            <div class="di"><span class="dot db"></span><span><strong>배송·픽업 프로세스</strong> — 배송 시간, 호텔 측 협조 방식, 물품 안전성, 고객 안내 체계</span></div>
+            <div class="di"><span class="dot db"></span><span><strong>고객 경험(NPS 관점)</strong> — 추천 의향, 불편 사항, 경쟁 우위 포인트 등 정성적 평가</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="svc-head">
+          <div class="num n2">2</div>
+          <div>
+            <div class="svc-title">KuP Express — 서비스 배경 및 포지셔닝</div>
+            <div class="svc-sub">경쟁사 서비스 기본 개요</div>
+          </div>
+        </div>
+        <div class="row"><span class="rl">서비스명</span><span class="rv">KuP Express <span class="badge b-gray">kup.travel</span></span></div>
+        <div class="row"><span class="rl">서비스 정의</span><span class="rv">외국인 여행객 대상 한국 이커머스 상품 당일 호텔 배송 서비스. 한국어 없이도 쇼핑·결제·수령까지 완결</span></div>
+        <div class="row"><span class="rl">주요 타겟</span><span class="rv">한국을 방문한 외국인 여행객 (영어권 중심)</span></div>
+        <div class="row"><span class="rl">핵심 가치</span><span class="rv">국내 판매가 수준의 가격 + 해외 카드 결제 + 최소 주문 금액 없음 + 당일배송</span></div>
+        <div class="row"><span class="rl">고객지원</span><span class="rv">이메일 전용 (express@kup.travel) — 앱 내 즉시 지원 채널 없음</span></div>
+
+        <div class="eval-grid">
+          <div class="eval-card">
+            <div class="eval-label">배송 소요 시간</div>
+            <div class="eval-val">~5.5h</div>
+            <div class="eval-desc">결제 완료(14:56) → 배송 완료(20:24) 기준</div>
+          </div>
+          <div class="eval-card">
+            <div class="eval-label">결제 금액 (테스트)</div>
+            <div class="eval-val">14,900원</div>
+            <div class="eval-desc">스낵류 2종 / 배송비 0원 / 최소주문 없음</div>
+          </div>
+          <div class="eval-card">
+            <div class="eval-label">결제 수단</div>
+            <div class="eval-val">해외카드</div>
+            <div class="eval-desc">Mastercard (PAYVERSE 결제창 연동)</div>
+          </div>
+          <div class="eval-card">
+            <div class="eval-label">결제 시도 횟수</div>
+            <div class="eval-val">3회</div>
+            <div class="eval-desc">로딩 무반응으로 인한 반복 시도</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="svc-head">
+          <div class="num n3">3</div>
+          <div>
+            <div class="svc-title">DK와의 서비스 포지션 비교</div>
+            <div class="svc-sub">테스트 전 사전 인식 기준</div>
+          </div>
+        </div>
+        <table class="compare-table">
+          <thead>
+            <tr>
+              <th style="width:30%">구분</th>
+              <th style="width:35%">KuP Express</th>
+              <th style="width:35%">DK Korea local delivery</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>수령 방식</strong></td>
+              <td>호텔 배송 (프론트 위탁)</td>
+              <td>호텔 배송 또는 DK 사무실 거점 픽업</td>
+            </tr>
+            <tr>
+              <td><strong>상품 소싱</strong></td>
+              <td>자체 큐레이션 상품 (한정)</td>
+              <td>DK Store + We Buy 구매대행 (광범위)</td>
+            </tr>
+            <tr>
+              <td><strong>배송 리드타임</strong></td>
+              <td>당일 배송</td>
+              <td>10영업일 전 주문 (추후 단축 예정)</td>
+            </tr>
+            <tr>
+              <td><strong>미수령 대응</strong></td>
+              <td>별도 정책 불명확</td>
+              <td class="win">국제배송 전환 안전망 구비</td>
+            </tr>
+            <tr>
+              <td><strong>고객지원</strong></td>
+              <td class="lose">이메일 전용</td>
+              <td>미정 (개선 기회)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ====== PART 2 ====== -->
+  <div id="page2" class="page">
+    <div class="wrap">
+      <p class="sec-label">Part 2 — 서비스 테스트 진행</p>
+
+      <div class="card">
+        <div class="svc-head">
+          <div class="num n1">1</div>
+          <div>
+            <div class="svc-title">결제 프로세스 테스트</div>
+            <div class="svc-sub">담당: 친친님 / 아이폰 14 Pro / 해외 Mastercard</div>
+          </div>
+        </div>
+
+        <div class="flow-label">주문 및 결제 플로우</div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-left"><div class="step-dot sd-blue">1</div><div class="step-line"></div></div>
+            <div class="step-content">
+              <div class="step-title">앱에서 상품 선택</div>
+              <div class="step-desc">스낵류 2종 선택 — ORION Market O Brownie Matcha (5,000원) / BEURRE Butter Seaweed (9,900원)</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-left"><div class="step-dot sd-amber">2</div><div class="step-line"></div></div>
+            <div class="step-content">
+              <div class="step-title">결제 수단 선택 후 무반응 (3회 반복)</div>
+              <div class="step-desc">PAYVERSE 결제창에서 해외 카드 선택 후 로딩만 발생, 아무 반응 없음. 동일 카드로 3회 시도 후 최종 결제 성공.</div>
+              <div style="margin-top:8px">
+                <span class="badge b-red">⚠ UX 이슈</span>
+                <span class="badge b-amber">iPhone 14 Pro</span>
+                <span class="badge b-gray">Mastercard</span>
+              </div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-left"><div class="step-dot sd-teal">3</div></div>
+            <div class="step-content">
+              <div class="step-time">14:56:27</div>
+              <div class="step-title">결제 성공 — 14,900 KRW</div>
+              <div class="step-desc">주문번호 #26695 생성. 주문 직후 인보이스 이메일 자동 발송 확인. 배송비 0원 / 할인 0원.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hl hl-amber section-gap">
+          <div class="hl-title">💳 결제 UX 주요 관찰</div>
+          <div class="hl-body">
+            <div class="di"><span class="dot do"></span><span>결제 완료/실패 여부를 사용자가 인지하기 어려운 피드백 구조 — 로딩 인디케이터 부재</span></div>
+            <div class="di"><span class="dot do"></span><span>정상 카드임에도 3회 시도 필요 → 결제 실패 시 고객이 포기할 가능성 높음</span></div>
+            <div class="di"><span class="dot dt"></span><span>해외 카드(Mastercard) 결제 자체는 최종 성공 → 해외 결제 인프라는 구축되어 있음</span></div>
+            <div class="di"><span class="dot dt"></span><span>최소 주문 금액 없음 — 소액 쇼핑도 부담 없이 이용 가능</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="svc-head">
+          <div class="num n2">2</div>
+          <div>
+            <div class="svc-title">배송 & 알림 프로세스</div>
+            <div class="svc-sub">주문일: 2026.05.14 / 수령일: 2026.05.15</div>
+          </div>
+        </div>
+
+        <div class="flow-label">실제 배송 타임라인 (앱 푸시 기반)</div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-left"><div class="step-dot sd-blue">①</div><div class="step-line"></div></div>
+            <div class="step-content">
+              <div class="step-time">14:56</div>
+              <div class="step-title">결제 성공 → ORDER CONFIRMED</div>
+              <div class="step-desc">상태값 "Order Confirmed" 표시. 인보이스 이메일 즉시 발송.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-left"><div class="step-dot sd-blue">②</div><div class="step-line"></div></div>
+            <div class="step-content">
+              <div class="step-time">15:20 (+24분)</div>
+              <div class="step-title">푸시 "Confirmed your order!"</div>
+              <div class="step-desc">주문 확인 푸시 알림 수신. 결제 후 24분 뒤 발송.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-left"><div class="step-dot sd-amber">③</div><div class="step-line"></div></div>
+            <div class="step-content">
+              <div class="step-time">16:15 (+1h 19m)</div>
+              <div class="step-title">푸시 "Product is being prepared!" → PREPARING DELIVERY</div>
+              <div class="step-desc">상품 준비 단계 돌입. 상태값 변경 확인.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-left"><div class="step-dot sd-amber">④</div><div class="step-line"></div></div>
+            <div class="step-content">
+              <div class="step-time">19:47 (+3h 32m)</div>
+              <div class="step-title">푸시 "Product is in transit!" → ON GOING DELIVERY</div>
+              <div class="step-desc">배송 출발 알림. 상태값 "on going delivery"로 전환.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-left"><div class="step-dot sd-teal">⑤</div></div>
+            <div class="step-content">
+              <div class="step-time">20:24 (+37분)</div>
+              <div class="step-title">푸시 "Deliverey Compleyed!" → DELIVERY COMPLETED</div>
+              <div class="step-desc">배송 완료 알림 + 이메일 동시 발송. 사진 포함 완료 화면 제공. <span class="badge b-red">오타: "Compleyed"</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sf">
+          <span class="sc sc-gray">ORDER CONFIRMED</span><span class="arr">→</span>
+          <span class="sc sc-blue">PREPARING DELIVERY</span><span class="arr">→</span>
+          <span class="sc sc-amber">ON GOING DELIVERY</span><span class="arr">→</span>
+          <span class="sc sc-teal">DELIVERY COMPLETED</span>
+        </div>
+
+        <div class="hl section-gap">
+          <div class="hl-title">✅ 배송 알림 체계 총평</div>
+          <div class="hl-body">결제부터 완료까지 총 4단계 푸시 알림 + 이메일 2회(주문확인/배송완료) 발송으로 고객 커뮤니케이션 체계가 잘 갖춰져 있음. 완료 화면에서 배송 사진 첨부는 신뢰감 제공.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="svc-head">
+          <div class="num n3">3</div>
+          <div>
+            <div class="svc-title">픽업·수령 프로세스</div>
+            <div class="svc-sub">담당: 지욱님 / 더퍼스트스테이호텔 (서울 강서구 마곡)</div>
+          </div>
+        </div>
+
+        <div class="row"><span class="rl">수령 장소</span><span class="rv">호텔 프론트 → 공용 택배(물품) 보관소로 안내 (직접 보관 아님)</span></div>
+        <div class="row"><span class="rl">실제 수령 시각</span><span class="rv">다음날 오전 (배송 완료 후 익일 수령)</span></div>
+        <div class="row"><span class="rl">호텔 협조</span><span class="rv">컨시어지 친절함. 단, 공용 물품 보관소로 연결 — 비밀번호 없는 오픈 캐비닛</span></div>
+        <div class="row"><span class="rl">신원확인</span><span class="rv">없음 (보관소에서 직접 수령 구조)</span></div>
+        <div class="row"><span class="rl">배송 안내</span><span class="rv">기사 연락 없음 / 호텔 룸 안내 전화 없음</span></div>
+        <div class="row"><span class="rl">포장</span><span class="rv">KuP 박스 + QR 송장 부착 + 인보이스 동봉. 안전한 포장 상태.</span></div>
+
+        <div class="hl hl-red section-gap">
+          <div class="hl-title">⚠ 수령 안전 리스크</div>
+          <div class="hl-body">
+            <div class="di"><span class="dot dr"></span><span>비밀번호 없는 오픈 캐비닛 구조로 도난·분실 위험 존재</span></div>
+            <div class="di"><span class="dot dr"></span><span>호텔이 상가 건물 내 위치 — PC방·노래방 이용객 등 불특정 다수 접근 가능</span></div>
+            <div class="di"><span class="dot dr"></span><span>호텔 협조 여부가 케이스 바이 케이스 — 일관성 없는 수령 경험</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ====== PART 3 ====== -->
+  <div id="page3" class="page">
+    <div class="wrap">
+      <p class="sec-label">Part 3 — 시사점</p>
+
+      <div class="card">
+        <div class="svc-head">
+          <div class="num n1">1</div>
+          <div>
+            <div class="svc-title">DK가 참고할 점 — KuP의 강점</div>
+            <div class="svc-sub">벤치마킹 적용 가능한 긍정 요소</div>
+          </div>
+        </div>
+
+        <div class="insight-card ic-green">
+          <div class="insight-num" style="color:#085041">참고 01 · 알림 체계</div>
+          <div class="insight-title">단계별 푸시 알림 + 이메일 이중 발송 구조</div>
+          <div class="insight-body">KuP는 주문 확인부터 배송 완료까지 4단계 푸시 알림을 제공하며, 완료 시에는 배송 사진이 포함된 화면을 노출. DK도 Korea local delivery 서비스에서 단계별 상태 알림(이메일 + 앱 푸시)을 동급 이상으로 구성해야 고객 신뢰도 확보 가능.</div>
+        </div>
+
+        <div class="insight-card ic-green">
+          <div class="insight-num" style="color:#085041">참고 02 · 주문 완료 이메일</div>
+          <div class="insight-title">주문 즉시 인보이스 이메일 자동 발송</div>
+          <div class="insight-body">결제 성공 직후 정형화된 인보이스 메일이 발송되어 고객이 영수증을 보유. 배송 완료 시에도 상세 내역 메일 재발송. DK 적용 시 고객 불안감 해소 및 CS 문의 감소 효과 기대.</div>
+        </div>
+
+        <div class="insight-card ic-blue">
+          <div class="insight-num" style="color:#185FA5">참고 03 · 가격 포지셔닝</div>
+          <div class="insight-title">한국 현지 판매가 수준 유지 + 배송비 0원</div>
+          <div class="insight-body">테스트 사용자가 서비스 추천 의향을 밝힌 핵심 이유. "비싸지 않음"이 명확한 가치 제안. DK도 Korea local delivery에서 배송비 정책 및 마진 구조를 투명하게 노출하여 '가격 합리성' 메시지를 강화할 수 있음.</div>
+        </div>
+
+        <div class="insight-card ic-blue">
+          <div class="insight-num" style="color:#185FA5">참고 04 · 최소 주문 금액 없음</div>
+          <div class="insight-title">소액 주문 허용으로 진입 장벽 제거</div>
+          <div class="insight-body">단돈 5,000원짜리 스낵도 주문 가능. 외국인 여행객이 '시험 삼아' 써볼 수 있는 구조. DK도 최소 주문 금액 기준을 최대한 낮게 설정하거나 없애는 방향을 검토할 것.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="svc-head">
+          <div class="num n2">2</div>
+          <div>
+            <div class="svc-title">DK의 차별화 포인트 — KuP의 약점</div>
+            <div class="svc-sub">DK가 우위를 점할 수 있는 영역</div>
+          </div>
+        </div>
+
+        <div class="insight-card ic-amber">
+          <div class="insight-num" style="color:#7A4800">차별화 01 · 고객지원</div>
+          <div class="insight-title">인앱 즉시 지원 채널 부재 — DK가 우위 확보 가능</div>
+          <div class="insight-body">KuP는 고객지원이 이메일 전용으로, 앱 이탈 + 즉시 응답 불가 구조. 테스트 사용자가 꼽은 최대 불편 사항. DK가 채팅 CS 또는 인앱 지원 채널을 제공한다면 명확한 경쟁 우위 확보 가능.</div>
+        </div>
+
+        <div class="insight-card ic-amber">
+          <div class="insight-num" style="color:#7A4800">차별화 02 · 수령 안전성</div>
+          <div class="insight-title">오픈 캐비닛 수령 → DK의 안전 수령 구조가 강점</div>
+          <div class="insight-body">KuP는 호텔 협조 여부가 일관적이지 않고, 실제 수령 장소가 비밀번호 없는 공용 보관소. 도난 위험에 노출. DK는 호텔 프론트 직접 인계 + 신원 확인 프로세스 + 미수령 시 국제배송 전환 안전망을 강점으로 홍보할 것.</div>
+        </div>
+
+        <div class="insight-card ic-red">
+          <div class="insight-num" style="color:#993C1D">차별화 03 · 결제 안정성</div>
+          <div class="insight-title">결제 실패 UX — DK는 안정적 결제 흐름 확보 필요</div>
+          <div class="insight-body">해외 카드 결제 시 무반응으로 3회 시도. 결제 실패/성공 피드백이 명확하지 않아 사용자 혼란. DK는 PAYVERSE 등 결제 PG 연동 시 로딩 인디케이터, 성공/실패 명확한 피드백 UI를 필수 적용해야 함.</div>
+        </div>
+
+        <div class="insight-card ic-red">
+          <div class="insight-num" style="color:#993C1D">차별화 04 · 상품 범위</div>
+          <div class="insight-title">KuP 상품군 한정 → DK는 We Buy 구매대행으로 무한 확장</div>
+          <div class="insight-body">KuP는 자체 큐레이션 상품만 제공하여 선택 폭이 제한적. DK는 DK Store + We Buy 구매대행으로 사실상 한국 전체 이커머스 상품을 커버 가능. 이 점을 명확히 마케팅 메시지로 활용할 것.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="svc-head">
+          <div class="num n3">3</div>
+          <div>
+            <div class="svc-title">추가 확인이 필요한 항목</div>
+            <div class="svc-sub">후속 조사 또는 의사결정이 필요한 오픈 이슈</div>
+          </div>
+        </div>
+
+        <div class="sub-card">
+          <div class="sub-title">📌 호텔 파트너십 구조</div>
+          <div class="di"><span class="dot do"></span><span>KuP가 호텔과 공식 계약을 맺고 있는지, 아니면 비공식 위탁인지 확인 필요 — DK 호텔 배송 안착을 위한 파트너십 모델 수립에 참고</span></div>
+          <div class="di"><span class="dot do"></span><span>호텔 측 거부 사례 여부, 호텔 유형별(비즈니스/부티크/체인) 협조 편차 파악</span></div>
+        </div>
+
+        <div class="sub-card">
+          <div class="sub-title">📌 KuP 운영 구조 및 물류 파트너</div>
+          <div class="di"><span class="dot db"></span><span>당일 배송 가능한 물류 파트너가 누구인지 — DK의 당일·익일 배송 가능성 검토 시 비교 기준</span></div>
+          <div class="di"><span class="dot db"></span><span>서울 외 지역(부산, 제주 등) 서비스 제공 여부 및 확장 로드맵 파악 필요</span></div>
+        </div>
+
+        <div class="sub-card">
+          <div class="sub-title">📌 결제 PG 및 해외 카드 지원 범위</div>
+          <div class="di"><span class="dot do"></span><span>KuP가 PAYVERSE 외 추가 결제 수단(PayPal, 애플페이 등)을 지원하는지 확인</span></div>
+          <div class="di"><span class="dot do"></span><span>DK Korea local delivery 결제 설계 시 해외 카드 UX 안정성 우선 확보 필수</span></div>
+        </div>
+
+        <div class="sub-card">
+          <div class="sub-title">📌 실제 고객 NPS 및 리뷰 모니터링</div>
+          <div class="di"><span class="dot db"></span><span>앱스토어 리뷰, Reddit, TikTok 등 외국인 여행객 커뮤니티에서 KuP 실사용 후기 지속 모니터링</span></div>
+          <div class="di"><span class="dot db"></span><span>테스트 사용자 1명은 추천 의향 있음 / 1명은 없음 — 소수 표본 한계, 추가 샘플 확보 필요</span></div>
+        </div>
+
+        <div class="hl section-gap">
+          <div class="hl-title">💡 한 줄 요약</div>
+          <div class="hl-body">KuP는 당일배송·해외카드·무료배송이라는 명확한 가치 제안을 갖추고 있으나, <strong>고객지원 부재·수령 안전성·결제 UX·상품 다양성</strong> 모두에서 개선 여지가 있음. DK는 이 4가지 영역에서 우위를 확보하면 충분히 차별화된 경쟁력 확보 가능.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function showPage(num) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('page' + num).classList.add('active');
+    event.currentTarget.classList.add('active');
+    window.scrollTo(0, 0);
+  }
+</script>
+
+</body>
+</html>
