@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -16,11 +17,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-seri
 .blog-meta p { font-size: 12px; color: #666; margin-bottom: 6px; }
 .blog-url { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: #185FA5; background: #E6F1FB; padding: 3px 8px; border-radius: 4px; text-decoration: none; }
 .section { margin-bottom: 20px; }
-.section-label { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.section-label { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
 .section-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: 4px; }
 .section-desc { font-size: 12px; color: #666; }
+.freq-label { font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 4px; }
+.freq-label-regular { background: #E6F1FB; color: #185FA5; }
+.freq-label-irregular { background: #F1EFE8; color: #5F5E5A; }
 .cat-table { width: 100%; border: 0.5px solid #e0e0e0; border-radius: 12px; overflow: hidden; }
-.cat-row { display: grid; grid-template-columns: 130px 1fr 100px 82px 160px; border-bottom: 0.5px solid #e0e0e0; }
+.cat-row { display: grid; grid-template-columns: 130px 1fr 100px 82px 180px; border-bottom: 0.5px solid #e0e0e0; }
 .cat-row:last-child { border-bottom: none; }
 .cat-row.header { background: #f7f7f5; }
 .cell { padding: 9px 12px; font-size: 12px; color: #111; border-right: 0.5px solid #e0e0e0; display: flex; align-items: center; gap: 6px; }
@@ -38,17 +42,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-seri
 .p-sales { background: #FBEAF0; color: #993556; }
 .hidden-tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: #FAEEDA; color: #854F0B; font-weight: 500; }
 .kw-chip { display: inline-block; font-size: 10px; padding: 1px 6px; border-radius: 3px; background: #f2f2f0; color: #666; border: 0.5px solid #e0e0e0; margin: 1px 1px 0 0; }
-.legend { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; }
-.legend-label { font-size: 11px; color: #888; margin-right: 2px; }
+.legend { margin-bottom: 12px; }
 .purpose-wrap { display: flex; flex-direction: column; gap: 3px; }
-.link-cell { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; }
-.link-input-wrap { display: flex; align-items: center; gap: 4px; }
-.link-input { font-size: 11px; padding: 3px 6px; border: 0.5px solid #ccc; border-radius: 4px; background: #fff; color: #111; width: 100%; outline: none; }
-.link-input:focus { border-color: #888; }
-.link-input::placeholder { color: #bbb; font-size: 10px; }
-.link-go { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 4px; background: #f2f2f0; border: 0.5px solid #e0e0e0; cursor: pointer; flex-shrink: 0; color: #666; font-size: 12px; text-decoration: none; }
-.link-go:hover { background: #e8e8e6; }
-.divider { height: 1px; background: #e0e0e0; margin: 0 8px; }
+.link-cell { padding: 9px 12px; display: flex; align-items: center; }
+.example-link { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: #185FA5; text-decoration: none; word-break: break-all; line-height: 1.4; }
+.example-link i { font-size: 12px; flex-shrink: 0; }
+.example-link:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -66,72 +65,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-seri
   </div>
 
   <div class="legend">
-    <span class="legend-label">발행 주기</span>
-    <span class="freq-badge freq-mid">월 1–2회</span>
-    <span class="freq-badge freq-low">비정기</span>
-    <span class="freq-badge freq-hold">미정</span>
-    <span style="display:inline-block; width:1px; height:12px; background:#e0e0e0; margin: 0 4px;"></span>
-    <span class="legend-label">목적</span>
-    <span class="purpose-tag p-seo">SEO</span>
-    <span class="purpose-tag p-pr">PR</span>
-    <span class="purpose-tag p-branding">브랜딩</span>
-    <span class="purpose-tag p-sales">세일즈</span>
-  </div>
-
-  <!-- DK 새소식 -->
-  <div class="section">
-    <div class="section-label">
-      <span class="section-badge" style="background:#EEEDFE;color:#3C3489;"><i class="ti ti-bell"></i> DK 새소식</span>
-      <span class="section-desc">공식 알림 채널 — 팔로워 유지·관계 관리</span>
-    </div>
-    <div class="cat-table">
-      <div class="cat-row header">
-        <div class="cell header">카테고리</div>
-        <div class="cell header">콘텐츠 방향</div>
-        <div class="cell header">발행 주기</div>
-        <div class="cell header">목적</div>
-        <div class="cell header">콘텐츠 예시</div>
-      </div>
-      <div class="cat-row">
-        <div class="cell name">공지사항</div>
-        <div class="cell" style="flex-direction:column; align-items:flex-start; gap:4px;">
-          <span>휴일 안내, 명절 인사, 서비스 업데이트, 운영 안내, 정책 변경</span>
-          <div><span class="kw-chip">딜리버드코리아</span><span class="kw-chip">딜리버드파트너스</span></div>
-        </div>
-        <div class="cell"><span class="freq-badge freq-low">비정기</span></div>
-        <div class="cell"><span class="purpose-tag p-branding">브랜딩</span></div>
-        <div class="link-cell">
-          <div class="link-input-wrap">
-            <input class="link-input" type="text" placeholder="URL 입력" id="lnk-notice" />
-            <a class="link-go" href="#" onclick="goLink('lnk-notice'); return false;"><i class="ti ti-arrow-right"></i></a>
-          </div>
-        </div>
-      </div>
-      <div class="cat-row">
-        <div class="cell name" style="flex-direction:column; align-items:flex-start;">
-          <span>DK Promotion</span>
-          <span class="hidden-tag" style="margin-top:3px;">비공개</span>
-        </div>
-        <div class="cell" style="flex-direction:column; align-items:flex-start; gap:4px;">
-          <span>프로모션, 기념 이벤트 — 오픈 시점에 일괄 공개</span>
-          <div><span class="kw-chip">딜리버드코리아</span><span class="kw-chip">역직구</span></div>
-        </div>
-        <div class="cell"><span class="freq-badge freq-hold">미정</span></div>
-        <div class="cell"><span class="purpose-tag p-sales">세일즈</span></div>
-        <div class="link-cell">
-          <div class="link-input-wrap">
-            <input class="link-input" type="text" placeholder="URL 입력" id="lnk-promo" />
-            <a class="link-go" href="#" onclick="goLink('lnk-promo'); return false;"><i class="ti ti-arrow-right"></i></a>
-          </div>
-        </div>
-      </div>
-    </div>
+    <span style="font-size:12px; color:#111;">발행 주기 &nbsp;정기 4~5회 (뉴스룸 1~2회, B2B 비즈니스 3회) / 비정기 (DK 소식, About DK, 딜리버드인)</span>
   </div>
 
   <!-- 뉴스룸 -->
   <div class="section">
     <div class="section-label">
       <span class="section-badge" style="background:#E1F5EE;color:#0F6E56;"><i class="ti ti-news"></i> 뉴스룸</span>
+      <span class="freq-label freq-label-regular">월 2회 정기발행</span>
       <span class="section-desc">미디어 신뢰도 확보 + 기업 스토리텔링</span>
     </div>
     <div class="cat-table">
@@ -151,10 +92,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-seri
         <div class="cell"><span class="freq-badge freq-mid">월 2회 이하</span></div>
         <div class="cell"><span class="purpose-tag p-pr">PR</span></div>
         <div class="link-cell">
-          <div class="link-input-wrap">
-            <input class="link-input" type="text" placeholder="URL 입력" id="lnk-press" />
-            <a class="link-go" href="#" onclick="goLink('lnk-press'); return false;"><i class="ti ti-arrow-right"></i></a>
-          </div>
+          <a class="example-link" href="https://company.delivered.co.kr/Newsroom" target="_blank">
+            <i class="ti ti-external-link"></i>company.delivered.co.kr/Newsroom
+          </a>
         </div>
       </div>
       <div class="cat-row">
@@ -166,10 +106,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-seri
         <div class="cell"><span class="freq-badge freq-low">비정기</span></div>
         <div class="cell"><span class="purpose-tag p-branding">브랜딩</span></div>
         <div class="link-cell">
-          <div class="link-input-wrap">
-            <input class="link-input" type="text" placeholder="URL 입력" id="lnk-story" />
-            <a class="link-go" href="#" onclick="goLink('lnk-story'); return false;"><i class="ti ti-arrow-right"></i></a>
-          </div>
+          <a class="example-link" href="https://blog.naver.com/PostList.naver?blogId=coupang_kr&from=postList&categoryNo=13" target="_blank">
+            <i class="ti ti-external-link"></i>coupang_kr 기업이야기 카테고리
+          </a>
         </div>
       </div>
     </div>
@@ -179,6 +118,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-seri
   <div class="section">
     <div class="section-label">
       <span class="section-badge" style="background:#E6F1FB;color:#185FA5;"><i class="ti ti-briefcase"></i> B2B 비즈니스</span>
+      <span class="freq-label freq-label-regular">월 3회 정기발행</span>
       <span class="section-desc">핵심 SEO 채널 — 역직구·해외진출 잠재 고객 유입</span>
     </div>
     <div class="cat-table">
@@ -198,10 +138,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-seri
         <div class="cell"><span class="freq-badge freq-mid">월 1회</span></div>
         <div class="cell"><span class="purpose-tag p-sales">세일즈</span></div>
         <div class="link-cell">
-          <div class="link-input-wrap">
-            <input class="link-input" type="text" placeholder="URL 입력" id="lnk-solution" />
-            <a class="link-go" href="#" onclick="goLink('lnk-solution'); return false;"><i class="ti ti-arrow-right"></i></a>
-          </div>
+          <a class="example-link" href="https://blog.naver.com/PostList.naver?blogId=sem2017&from=postList&categoryNo=16" target="_blank">
+            <i class="ti ti-external-link"></i>삼성전기 블로그
+          </a>
         </div>
       </div>
       <div class="cat-row">
@@ -213,10 +152,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-seri
         <div class="cell"><span class="freq-badge freq-mid">월 1회</span></div>
         <div class="cell"><span class="purpose-tag p-sales">세일즈</span></div>
         <div class="link-cell">
-          <div class="link-input-wrap">
-            <input class="link-input" type="text" placeholder="URL 입력" id="lnk-case" />
-            <a class="link-go" href="#" onclick="goLink('lnk-case'); return false;"><i class="ti ti-arrow-right"></i></a>
-          </div>
+          <a class="example-link" href="https://company.delivered.co.kr/Case-Study" target="_blank">
+            <i class="ti ti-external-link"></i>company.delivered.co.kr/Case-Study
+          </a>
         </div>
       </div>
       <div class="cat-row">
@@ -233,10 +171,58 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-seri
           </div>
         </div>
         <div class="link-cell">
-          <div class="link-input-wrap">
-            <input class="link-input" type="text" placeholder="URL 입력" id="lnk-trend" />
-            <a class="link-go" href="#" onclick="goLink('lnk-trend'); return false;"><i class="ti ti-arrow-right"></i></a>
-          </div>
+          <a class="example-link" href="https://blog.naver.com/kimglobal" target="_blank">
+            <i class="ti ti-external-link"></i>blog.naver.com/kimglobal
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DK 새소식 -->
+  <div class="section">
+    <div class="section-label">
+      <span class="section-badge" style="background:#EEEDFE;color:#3C3489;"><i class="ti ti-bell"></i> DK 새소식</span>
+      <span class="freq-label freq-label-irregular">비정기 발행</span>
+      <span class="section-desc">공식 알림 채널 — 팔로워 유지·관계 관리</span>
+    </div>
+    <div class="cat-table">
+      <div class="cat-row header">
+        <div class="cell header">카테고리</div>
+        <div class="cell header">콘텐츠 방향</div>
+        <div class="cell header">발행 주기</div>
+        <div class="cell header">목적</div>
+        <div class="cell header">콘텐츠 예시</div>
+      </div>
+      <div class="cat-row">
+        <div class="cell name">공지사항</div>
+        <div class="cell" style="flex-direction:column; align-items:flex-start; gap:4px;">
+          <span>휴일 안내, 명절 인사, 서비스 업데이트, 운영 안내, 정책 변경</span>
+          <div><span class="kw-chip">딜리버드코리아</span><span class="kw-chip">딜리버드파트너스</span></div>
+        </div>
+        <div class="cell"><span class="freq-badge freq-low">비정기</span></div>
+        <div class="cell"><span class="purpose-tag p-branding">브랜딩</span></div>
+        <div class="link-cell">
+          <a class="example-link" href="https://company.delivered.co.kr/Notice" target="_blank">
+            <i class="ti ti-external-link"></i>company.delivered.co.kr/Notice
+          </a>
+        </div>
+      </div>
+      <div class="cat-row">
+        <div class="cell name" style="flex-direction:column; align-items:flex-start;">
+          <span>DK Promotion</span>
+          <span class="hidden-tag" style="margin-top:3px;">비공개</span>
+        </div>
+        <div class="cell" style="flex-direction:column; align-items:flex-start; gap:4px;">
+          <span>프로모션, 기념 이벤트 — 오픈 시점에 일괄 공개</span>
+          <div><span class="kw-chip">딜리버드코리아</span><span class="kw-chip">역직구</span></div>
+        </div>
+        <div class="cell"><span class="freq-badge freq-hold">미정</span></div>
+        <div class="cell"><span class="purpose-tag p-sales">세일즈</span></div>
+        <div class="link-cell">
+          <a class="example-link" href="https://blog.naver.com/PostList.naver?blogId=samsung_korea&from=postList&categoryNo=24" target="_blank">
+            <i class="ti ti-external-link"></i>samsung_korea 이벤트 카테고리
+          </a>
         </div>
       </div>
     </div>
@@ -246,6 +232,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-seri
   <div class="section" style="margin-bottom:0;">
     <div class="section-label">
       <span class="section-badge" style="background:#F1EFE8;color:#5F5E5A;"><i class="ti ti-id-badge"></i> 브랜드 채널</span>
+      <span class="freq-label freq-label-irregular">비정기 발행</span>
       <span class="section-desc">신뢰·친밀감 형성 — 채용·파트너 관심도 제고</span>
     </div>
     <div class="cat-table">
@@ -265,10 +252,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-seri
         <div class="cell"><span class="freq-badge freq-low">비정기</span></div>
         <div class="cell"><span class="purpose-tag p-branding">브랜딩</span></div>
         <div class="link-cell">
-          <div class="link-input-wrap">
-            <input class="link-input" type="text" placeholder="URL 입력" id="lnk-about" />
-            <a class="link-go" href="#" onclick="goLink('lnk-about'); return false;"><i class="ti ti-arrow-right"></i></a>
-          </div>
+          <a class="example-link" href="https://blog.naver.com/PostList.nhn?blogId=sem2017&from=postList&categoryNo=1&parentCategoryNo=1" target="_blank">
+            <i class="ti ti-external-link"></i>삼성전기 블로그
+          </a>
         </div>
       </div>
       <div class="cat-row">
@@ -280,33 +266,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-seri
         <div class="cell"><span class="freq-badge freq-low">비정기</span></div>
         <div class="cell"><span class="purpose-tag p-branding">브랜딩</span></div>
         <div class="link-cell">
-          <div class="link-input-wrap">
-            <input class="link-input" type="text" placeholder="URL 입력" id="lnk-people" />
-            <a class="link-go" href="#" onclick="goLink('lnk-people'); return false;"><i class="ti ti-arrow-right"></i></a>
-          </div>
+          <a class="example-link" href="https://blog.naver.com/hanwhadays/222596180092" target="_blank">
+            <i class="ti ti-external-link"></i>blog.naver.com/hanwhadays
+          </a>
         </div>
       </div>
     </div>
   </div>
 </div>
-
-<script>
-function goLink(inputId) {
-  const val = document.getElementById(inputId).value.trim();
-  if (!val) return;
-  const url = val.startsWith('http') ? val : 'https://' + val;
-  window.open(url, '_blank');
-}
-document.querySelectorAll('.link-input').forEach(input => {
-  input.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') {
-      const val = this.value.trim();
-      if (!val) return;
-      const url = val.startsWith('http') ? val : 'https://' + val;
-      window.open(url, '_blank');
-    }
-  });
-});
-</script>
 </body>
 </html>
