@@ -1,13 +1,14 @@
 
+
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-.wrap { padding: 1.5rem 0; font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-serif; }
+.wrap { padding: 1.5rem 1rem; max-width: 680px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-serif; }
 
-.top { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 1.75rem; padding-bottom: 1.25rem; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.top { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 1.75rem; padding-bottom: 1.25rem; border-bottom: 0.5px solid #E0E0E0; }
 .brand-thumb { width: 56px; height: 56px; border-radius: 8px; background: #FF6B00; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .brand-thumb i { font-size: 28px; color: #fff; }
-.brand-meta h1 { font-size: 17px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 3px; }
-.brand-meta p { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 6px; }
+.brand-meta h1 { font-size: 17px; font-weight: 500; color: #1A1A1A; margin-bottom: 3px; }
+.brand-meta p { font-size: 12px; color: #777777; margin-bottom: 6px; }
 .brand-url { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: #185FA5; background: #E6F1FB; padding: 3px 8px; border-radius: 4px; text-decoration: none; }
 
 .tab-bar { display: grid; grid-template-columns: 1fr 1fr; margin-bottom: 2rem; border: 1.5px solid #FF6B00; border-radius: 8px; overflow: hidden; }
@@ -25,34 +26,34 @@
 .badge { display: inline-block; font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 4px; white-space: nowrap; }
 .b-teal { background: #E1F5EE; color: #0F6E56; }
 
-.cat-table { width: 100%; border: 0.5px solid var(--color-border-tertiary); border-radius: 12px; overflow: hidden; }
-.cat-row { display: grid; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.cat-table { width: 100%; border: 0.5px solid #E0E0E0; border-radius: 12px; overflow: hidden; }
+.cat-row { display: grid; border-bottom: 0.5px solid #E0E0E0; }
 .cat-row:last-child { border-bottom: none; }
-.cat-row.header { background: var(--color-background-secondary); }
+.cat-row.header { background: #F7F7F7; }
 .r2 { grid-template-columns: 160px 1fr; }
 .r2kw { grid-template-columns: 1fr 120px; }
-.cell { padding: 9px 12px; font-size: 12px; color: var(--color-text-primary); border-right: 0.5px solid var(--color-border-tertiary); display: flex; align-items: center; gap: 6px; }
+.cell { padding: 9px 12px; font-size: 12px; color: #1A1A1A; border-right: 0.5px solid #E0E0E0; display: flex; align-items: center; gap: 6px; }
 .cell:last-child { border-right: none; }
-.cell.header { font-size: 11px; font-weight: 500; color: var(--color-text-secondary); }
+.cell.header { font-size: 11px; font-weight: 500; color: #777777; }
 .cell.name { font-weight: 500; }
 .cell.center { justify-content: center; }
-.cell.total { background: var(--color-background-secondary); font-weight: 500; }
+.cell.total { background: #F7F7F7; font-weight: 500; }
 
 .notice { background: #FFF0E6; border-left: 3px solid #FF6B00; border-radius: 0 6px 6px 0; padding: 10px 14px; font-size: 12px; color: #CC5500; line-height: 1.6; margin-top: 10px; }
 .warning { background: #FCEBEB; border-left: 3px solid #E24B4A; border-radius: 0 6px 6px 0; padding: 10px 14px; font-size: 12px; color: #A32D2D; line-height: 1.6; margin-top: 10px; display: flex; align-items: flex-start; gap: 7px; }
 .warning i { flex-shrink: 0; margin-top: 1px; }
 
-.price-table { width: 100%; border-collapse: collapse; border: 0.5px solid var(--color-border-tertiary); border-radius: 12px; overflow: hidden; }
-.price-table th { background: var(--color-background-secondary); padding: 7px 10px; font-size: 11px; font-weight: 500; color: var(--color-text-secondary); border: 0.5px solid var(--color-border-tertiary); text-align: center; }
-.price-table td { padding: 6px 10px; border: 0.5px solid var(--color-border-tertiary); color: var(--color-text-primary); text-align: center; font-size: 11px; }
-.price-table td.row-label { text-align: left; font-weight: 500; background: var(--color-background-secondary); }
+.price-table { width: 100%; border-collapse: collapse; border: 0.5px solid #E0E0E0; border-radius: 12px; overflow: hidden; }
+.price-table th { background: #F7F7F7; padding: 7px 10px; font-size: 11px; font-weight: 500; color: #777777; border: 0.5px solid #E0E0E0; text-align: center; }
+.price-table td { padding: 6px 10px; border: 0.5px solid #E0E0E0; color: #1A1A1A; text-align: center; font-size: 11px; }
+.price-table td.row-label { text-align: left; font-weight: 500; background: #F7F7F7; }
 .price-table td.now { background: #FFF0E6; font-weight: 500; color: #CC5500; }
 .price-table td.hl-row { background: #FFFDE0; }
 .now-badge { display: inline-block; font-size: 9px; background: #FF6B00; color: #fff; padding: 1px 5px; border-radius: 3px; margin-left: 4px; vertical-align: middle; }
 
 /* Part2 이미지 */
-.preview-img { width: 100%; border-radius: 10px; overflow: hidden; border: 0.5px solid var(--color-border-tertiary); }
-.preview-img img { width: 100%; display: block; }
+.preview-img { max-width: 480px; border-radius: 10px; overflow: hidden; border: 0.5px solid #E0E0E0; }
+.preview-img img { width: 100%; height: auto; display: block; }
 .preview-link { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 12px; padding: 12px; background: #FF6B00; border-radius: 8px; color: #fff; font-size: 13px; font-weight: 500; text-decoration: none; transition: opacity 0.15s; }
 .preview-link:hover { opacity: 0.88; }
 </style>
@@ -91,7 +92,7 @@
         <div class="cell name">과금 방식</div>
         <div class="cell" style="flex-direction:column; align-items:flex-start; gap:4px; padding: 10px 12px;">
           <span>쿼리수 기반 월 정액 부과 — 상품 유형·구매 키워드의 최근 30일 조회수에 따라 산정되는 기간제 계약 방식</span>
-          <span style="font-size:11px; color:var(--color-text-secondary);">(구입하고자 하는 키워드의 검색량을 모두 합산하여 월정액 금액 산정 후 계약)</span>
+          <span style="font-size:11px; color:#777777;">(구입하고자 하는 키워드의 검색량을 모두 합산하여 월정액 금액 산정 후 계약)</span>
         </div>
       </div>
       <div class="cat-row r2">
