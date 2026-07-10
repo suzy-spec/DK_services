@@ -37,6 +37,11 @@
   .eyebrow{ font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--cyan); font-weight:600; margin-bottom:6px; }
   h1{ margin:0; font-size:22px; font-weight:700; letter-spacing:-0.01em; }
   .top-sub{ margin-top:6px; font-size:13px; color:#B9C2D6; }
+  .cloud-status{ font-size:11px; margin-top:10px; padding:4px 10px; border-radius:20px; display:inline-block; font-weight:700; position:relative; z-index:1; }
+  .cloud-status.ok{ background:rgba(16,185,129,0.18); color:#6EE7B7; }
+  .cloud-status.fail{ background:rgba(239,68,68,0.2); color:#FCA5A5; }
+  .cloud-status.local{ background:rgba(255,255,255,0.1); color:#DCE2F0; }
+  .cloud-status.checking{ background:rgba(255,255,255,0.08); color:#9CA6BC; }
   .view-toggle{ display:flex; gap:8px; margin-top:18px; position:relative; z-index:1; }
   .view-toggle button{
     flex:1; padding:10px 10px; border-radius:10px; border:1px solid rgba(255,255,255,0.16);
@@ -169,6 +174,7 @@
     <div class="eyebrow">Deliverd Korea · Ops</div>
     <h1>DK 업무 대시보드</h1>
     <div class="top-sub">월간 캘린더로 날짜를 고르면, 그날의 타임테이블이 열려요.</div>
+    <div class="cloud-status checking" id="cloudStatus">☁ 연결 확인 중...</div>
     <div class="view-toggle">
       <button id="btnCal" class="active">📅 월간 캘린더</button>
       <button id="btnDay">⏱ 오늘 타임테이블</button>
@@ -314,6 +320,7 @@ const remoteAdapter = {
   },
   list: async (prefix)=>{
     const data = await jsonpRequest(APPS_SCRIPT_URL, {action:"list", prefix:prefix||"", token:API_TOKEN});
+    if(data.error) throw new Error(data.error);
     return data;
   }
 };
@@ -449,7 +456,7 @@ async function loadDay(dateKey){
 }
 async function saveDay(dateKey){
   try{ await storage.set("day:"+dateKey, JSON.stringify(storeCache[dateKey])); }
-  catch(e){ console.error("save failed", e); }
+  catch(e){ console.error("save failed", e); toast("⚠ 저장 실패 - 클라우드 연결을 확인해주세요"); }
 }
 function splitOneTask(baseTask, startMin, lunchTask){
   if(!lunchTask) return [{...baseTask, time:toHHMM(startMin)}];
@@ -826,7 +833,28 @@ document.getElementById("saveConfig").addEventListener("click", async ()=>{
   toast("설정을 저장했어요 (앞으로 새로 여는 날짜부터 적용돼요)");
 });
 
+async function checkCloudStatus(){
+  const el = document.getElementById("cloudStatus");
+  if(!el) return;
+  const configured = APPS_SCRIPT_URL && APPS_SCRIPT_URL.startsWith("http");
+  if(!configured){
+    el.textContent = "💾 이 브라우저에만 저장 중 (클라우드 미설정)";
+    el.className = "cloud-status local";
+    return;
+  }
+  try{
+    await storage.list("config");
+    el.textContent = "☁ 클라우드 저장 연결됨";
+    el.className = "cloud-status ok";
+  }catch(e){
+    el.textContent = "⚠ 클라우드 연결 실패 - 저장이 안 되고 있어요";
+    el.className = "cloud-status fail";
+    console.error("cloud status check failed", e);
+  }
+}
+
 (async function init(){
+  checkCloudStatus();
   await loadConfig();
   await loadLeaveDates();
   renderCalendar();
