@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DK 업무 대시보드</title>
+<style>
+  :root{
+    --navy:#0F172A;
+    --navy-2:#1E2A44;
+    --indigo:#4F46E5;
+    --indigo-soft:#EEF0FD;
+    --cyan:#06B6D4;
+    --bg:#F6F7FB;
+    --surface:#FFFFFF;
+    --line:#E4E7F0;
+    --text:#1E2433;
+    --muted:#6B7280;
+    --amber:#F59E0B;
+    --green:#10B981;
+    --red:#EF4444;
+    --radius:14px;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--bg); color:var(--text); min-height:100vh; }
+  .app{ max-width:920px; margin:0 auto; padding:0 0 60px; }
+  header.top{
+    background:linear-gradient(135deg,var(--navy) 0%, var(--navy-2) 100%);
+    color:#fff; padding:28px 24px 22px; border-radius:0 0 22px 22px;
+    position:relative; overflow:hidden;
+  }
+  header.top::after{
+    content:""; position:absolute; right:-40px; top:-60px; width:220px;height:220px;
+    background:radial-gradient(circle, rgba(6,182,212,0.35), transparent 70%);
+  }
+  .eyebrow{ font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--cyan); font-weight:600; margin-bottom:6px; }
+  h1{ margin:0; font-size:22px; font-weight:700; letter-spacing:-0.01em; }
+  .top-sub{ margin-top:6px; font-size:13px; color:#B9C2D6; }
+  .cloud-status{ font-size:11px; margin-top:10px; padding:4px 10px; border-radius:20px; display:inline-block; font-weight:700; position:relative; z-index:1; }
+  .cloud-status.ok{ background:rgba(16,185,129,0.18); color:#6EE7B7; }
+  .cloud-status.fail{ background:rgba(239,68,68,0.2); color:#FCA5A5; }
+  .cloud-status.local{ background:rgba(255,255,255,0.1); color:#DCE2F0; }
+  .cloud-status.checking{ background:rgba(255,255,255,0.08); color:#9CA6BC; }
+  .view-toggle{ display:flex; gap:8px; margin-top:18px; position:relative; z-index:1; }
+  .view-toggle button{
+    flex:1; padding:10px 10px; border-radius:10px; border:1px solid rgba(255,255,255,0.16);
+    background:rgba(255,255,255,0.06); color:#DCE2F0; font-size:12.5px; font-weight:600; cursor:pointer; transition:.15s;
+  }
+  .view-toggle button.active{ background:var(--cyan); color:var(--navy); border-color:var(--cyan); }
+
+  main{padding:20px 20px 0;}
+  .card{ background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:18px; margin-bottom:16px; }
+
+  .cal-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .cal-header .month-label{ font-size:16px; font-weight:700; }
+  .cal-nav{display:flex; gap:6px;}
+  .cal-nav button{ width:32px;height:32px; border-radius:8px; border:1px solid var(--line); background:var(--bg); cursor:pointer; font-size:14px; color:var(--text); }
+  .cal-nav button:hover{background:var(--indigo-soft);}
+  .weekdays{ display:grid; grid-template-columns:repeat(7,1fr); text-align:center; font-size:11px; color:var(--muted); margin-bottom:6px; font-weight:600; }
+  .weekdays span.sun{color:var(--red);}
+  .weekdays span.sat{color:var(--indigo);}
+  .days-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:5px; }
+  .day-cell{
+    aspect-ratio:1/0.85; border-radius:10px; border:1px solid transparent; background:var(--bg);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    cursor:pointer; font-size:13px; position:relative; transition:.15s;
+  }
+  .day-cell:hover{border-color:var(--indigo);}
+  .day-cell.empty{background:transparent; cursor:default;}
+  .day-cell.today{border-color:var(--cyan); box-shadow:0 0 0 1px var(--cyan) inset;}
+  .day-cell.selected{background:var(--indigo); color:#fff;}
+  .day-cell.weekend{background:transparent; color:var(--muted);}
+  .day-cell.weekend .holiday-tag{font-size:8.5px; margin-top:2px; color:var(--muted);}
+  .day-cell.selected.weekend{background:var(--indigo); color:#fff;}
+  .day-cell.leave{background:#FFF6E9; color:#B45309;}
+  .day-cell.leave .holiday-tag{font-size:8.5px; margin-top:2px; color:#B45309; font-weight:700;}
+  .day-cell.selected.leave{background:var(--amber); color:#fff;}
+  .day-cell.selected.leave .holiday-tag{color:#fff;}
+  .day-cell .dot{ width:5px;height:5px;border-radius:50%; background:var(--indigo); margin-top:3px; }
+  .day-cell.selected .dot{background:#fff;}
+
+  .day-view-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+  .day-view-header .date-title{ font-size:17px; font-weight:700; }
+  .weekend-badge{ display:inline-block; margin-left:8px; font-size:11px; background:var(--indigo-soft); color:var(--indigo); padding:2px 8px; border-radius:20px; font-weight:700; vertical-align:middle;}
+  .leave-badge{ display:inline-block; margin-left:8px; font-size:11px; background:#FFF6E9; color:#B45309; padding:2px 8px; border-radius:20px; font-weight:700; vertical-align:middle;}
+  .back-btn{ border:none; background:none; color:var(--indigo); font-size:13px; font-weight:600; cursor:pointer; padding:6px 0; }
+  .leave-select{ border:1px solid var(--line); background:var(--surface); border-radius:8px; padding:6px 8px; font-size:12px; cursor:pointer; color:var(--text); margin-left:6px; font-family:inherit; }
+  .leave-select.on{background:#FFF6E9; border-color:var(--amber); color:#B45309;}
+  .header-actions{display:flex; align-items:center;}
+  .settings-row{ display:flex; align-items:center; gap:10px; font-size:12px; color:var(--muted); margin-bottom:14px; flex-wrap:wrap; }
+  .settings-row label{display:flex; align-items:center; gap:6px;}
+  .settings-row input[type=time]{ border:1px solid var(--line); border-radius:8px; padding:5px 8px; font-size:12px; font-family:inherit; }
+  .alarm-btn{ border:1px solid var(--line); background:var(--surface); border-radius:8px; padding:6px 10px; font-size:12px; cursor:pointer; color:var(--text); display:flex; align-items:center; gap:5px; }
+  .alarm-btn.on{background:var(--indigo-soft); border-color:var(--indigo); color:var(--indigo);}
+
+  .timeline{ position:relative; padding-left:54px; }
+  .timeline::before{ content:""; position:absolute; left:44px; top:4px; bottom:4px; width:2px; background:var(--line); }
+  .now-line{ position:absolute; left:34px; right:0; height:2px; background:var(--red); z-index:3; display:none; }
+  .now-line::before{ content:"NOW"; position:absolute; left:-40px; top:-8px; font-size:9px; font-weight:800; color:#fff; background:var(--red); padding:1px 5px; border-radius:5px; }
+  .task{
+    position:relative; margin-bottom:10px; padding:12px 14px; background:var(--bg);
+    border:1px solid var(--line); border-radius:10px; display:flex; align-items:flex-start; gap:12px;
+    cursor:grab;
+  }
+  .task:active{cursor:grabbing;}
+  .task.done{opacity:.5;}
+  .task.custom{border-left:3px solid var(--cyan);}
+  .task.custom:active{cursor:grabbing;}
+  .task.dragging{opacity:.35;}
+  .task.drop-target{border-color:var(--indigo); box-shadow:0 0 0 2px var(--indigo-soft) inset;}
+  .drag-handle{color:var(--muted); font-size:12px; letter-spacing:-1px; margin-right:2px; user-select:none;}
+  .task.brk{background:#FBF6EC; border-color:#F1E3C4;}
+  .task.locked{cursor:default;}
+  .task.locked:active{cursor:default;}
+  .task-time{ position:absolute; left:-54px; top:12px; width:44px; text-align:right; font-size:11px; color:var(--muted); font-weight:600; }
+  .task-dot{ position:absolute; left:-14px; top:16px; width:9px;height:9px; border-radius:50%; background:var(--indigo); border:2px solid var(--surface); }
+  .task.brk .task-dot{background:var(--amber);}
+  .task input[type=checkbox]{ margin-top:2px; width:16px;height:16px; accent-color:var(--indigo); cursor:pointer; flex-shrink:0; }
+  .task-body{flex:1;}
+  .task-title{font-size:13.5px; font-weight:600;}
+  .task.done .task-title{text-decoration:line-through;}
+  .task-meta{font-size:11px; color:var(--muted); margin-top:2px;}
+  .task-remove{ border:none; background:none; color:var(--muted); cursor:pointer; font-size:15px; padding:0 2px; }
+  .task-remove:hover{color:var(--red);}
+
+  .quickadd-title{ font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin:18px 0 10px; }
+  .quickadd-tabs{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
+  .qa-tab{ border:1px solid var(--line); background:var(--bg); color:var(--muted); border-radius:20px; padding:6px 13px; font-size:12px; font-weight:700; cursor:pointer; }
+  .qa-tab:hover{border-color:var(--indigo); color:var(--indigo);}
+  .qa-tab.active{ background:var(--navy); color:#fff; border-color:var(--navy); }
+  .quickadd-list{ display:flex; flex-wrap:wrap; gap:8px; }
+  .qa-chip{ border:1px solid var(--indigo); color:var(--indigo); background:var(--indigo-soft); border-radius:20px; padding:7px 13px; font-size:12.5px; font-weight:600; cursor:pointer; }
+  .qa-chip:hover{background:var(--indigo); color:#fff;}
+  .empty-note{ font-size:12px; color:var(--muted); text-align:center; padding:20px 0; }
+
+  .admin-section{ margin-bottom:22px; }
+  .admin-section h3{ font-size:13.5px; margin:0 0 10px; }
+  .admin-cat-block{ margin-bottom:16px; padding-bottom:12px; border-bottom:1px dashed var(--line); }
+  .admin-cat-block:last-child{ border-bottom:none; }
+  .admin-cat-heading{ font-size:12px; font-weight:700; color:var(--indigo); margin:0 0 8px; }
+  .admin-row select.cat-select{ border:1px solid var(--line); border-radius:8px; padding:7px 6px; font-size:11.5px; font-family:inherit; color:var(--muted); }
+  .admin-row{ display:flex; gap:8px; align-items:center; margin-bottom:8px; }
+  .admin-row input[type=text]{ flex:1; border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-size:13px; font-family:inherit; }
+  .admin-row input[type=number]{ width:70px; border:1px solid var(--line); border-radius:8px; padding:8px 8px; font-size:13px; font-family:inherit; }
+  .admin-row .unit{font-size:12px; color:var(--muted);}
+  .admin-row button.del{ border:none; background:none; color:var(--muted); font-size:16px; cursor:pointer; }
+  .admin-row button.del:hover{color:var(--red);}
+  .add-row-btn{
+    border:1px dashed var(--line); background:var(--bg); border-radius:8px; padding:8px 12px;
+    font-size:12.5px; color:var(--muted); cursor:pointer; width:100%; text-align:center; margin-top:4px;
+  }
+  .add-row-btn:hover{border-color:var(--indigo); color:var(--indigo);}
+  .admin-time-row{display:flex; gap:16px; flex-wrap:wrap;}
+  .admin-time-row label{ display:flex; flex-direction:column; gap:4px; font-size:12px; color:var(--muted); }
+  .admin-time-row input[type=time]{ border:1px solid var(--line); border-radius:8px; padding:7px 9px; font-size:13px; }
+  .save-btn{
+    background:var(--indigo); color:#fff; border:none; border-radius:10px; padding:11px 16px;
+    font-size:13.5px; font-weight:700; cursor:pointer; width:100%; margin-top:6px;
+  }
+  .save-btn:hover{background:#4338CA;}
+
+  #toast{
+    position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+    background:var(--navy); color:#fff; padding:10px 18px; border-radius:20px; font-size:12.5px;
+    opacity:0; pointer-events:none; transition:.25s; z-index:50;
+  }
+  #toast.show{opacity:1; transform:translateX(-50%) translateY(-4px);}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="eyebrow">Deliverd Korea · Ops</div>
+    <h1>DK 업무 대시보드</h1>
+    <div class="top-sub">월간 캘린더로 날짜를 고르면, 그날의 타임테이블이 열려요.</div>
+    <div class="cloud-status checking" id="cloudStatus">☁ 연결 확인 중...</div>
+    <div class="view-toggle">
+      <button id="btnCal" class="active">📅 월간 캘린더</button>
+      <button id="btnDay">⏱ 오늘 타임테이블</button>
+      <button id="btnAdmin">⚙ 관리자설정</button>
+    </div>
+  </header>
+
+  <main>
+    <div id="calView" class="card">
+      <div class="cal-header">
+        <div class="cal-nav"><button id="prevMonth">‹</button></div>
+        <div class="month-label" id="monthLabel"></div>
+        <div class="cal-nav"><button id="nextMonth">›</button></div>
+      </div>
+      <div class="weekdays">
+        <span class="sun">일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span class="sat">토</span>
+      </div>
+      <div class="days-grid" id="daysGrid"></div>
+    </div>
+
+    <div id="dayView" class="card" style="display:none;">
+      <div class="day-view-header">
+        <div>
+          <button class="back-btn" id="backToCal">← 캘린더로</button>
+          <div class="date-title" id="dateTitle"></div>
+        </div>
+        <div class="header-actions">
+          <button class="alarm-btn" id="alarmToggle">🔔 알림 끄기</button>
+          <select class="leave-select" id="leaveSelect">
+            <option value="none">🏖 연차 없음</option>
+            <option value="full">연차 (종일)</option>
+            <option value="half_am">오전반차</option>
+            <option value="half_pm">오후반차</option>
+            <option value="quarter">반반차 (2시간)</option>
+          </select>
+        </div>
+      </div>
+      <div class="settings-row">
+        <label>업무 시작 시각
+          <input type="time" id="startTime" value="09:00">
+        </label>
+        <span id="alarmStatus" style="color:var(--muted);"></span>
+      </div>
+
+      <div class="timeline" id="timeline">
+        <div class="now-line" id="nowLine"></div>
+      </div>
+
+      <div class="quickadd-title">+ 오늘 추가 업무</div>
+      <div class="quickadd-tabs" id="quickAddTabs"></div>
+      <div class="quickadd-list" id="quickAdd"></div>
+    </div>
+
+    <div id="adminView" class="card" style="display:none;">
+      <div class="day-view-header">
+        <div class="date-title">⚙ 관리자설정</div>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:16px;">
+        여기서 바꾼 내용은 평일 타임테이블 자동 생성에 바로 반영돼요.
+      </div>
+
+      <div class="admin-section">
+        <h3>1. 평일 고정 데일리 업무 (순서대로 배치)</h3>
+        <div id="adminFixedList"></div>
+        <button class="add-row-btn" id="addFixedRow">+ 고정 업무 추가</button>
+      </div>
+
+      <div class="admin-section">
+        <h3>2. 점심시간</h3>
+        <div class="admin-time-row">
+          <label>점심시간 시작
+            <input type="time" id="lunchTimeInput">
+          </label>
+        </div>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:6px;">저녁시간은 자동으로 넣지 않아요. 필요할 때 아래 빠른추가 목록의 "저녁시간" 칩으로 직접 추가하세요.</div>
+      </div>
+
+      <div class="admin-section">
+        <h3>3. 빠른 추가 업무 목록 (카테고리별)</h3>
+        <div id="adminQuickList"></div>
+      </div>
+
+      <button class="save-btn" id="saveConfig">설정 저장</button>
+    </div>
+  </main>
+</div>
+<div id="toast"></div>
+
+<script>
+/* ============================================================
+   ☁️ 클라우드 저장 설정 (구글 앱스크립트 연동)
+   배포한 웹앱 URL과 토큰을 아래 두 값에 채워넣으면
+   어느 기기·브라우저에서 열어도 같은 데이터가 보여요.
+   비워두면 이 브라우저에만 저장돼요(기기별로 따로 저장).
+   ============================================================ */
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz-GqkzuRfewFnedPQeSwqGm0A2qJ06cWIu1o6GF0ja9XKvKuATdFhRtM2o_73FLgqv/exec"; // 예: "https://script.google.com/macros/s/AKfycb.../exec"
+const API_TOKEN = "schedule2026";       // 앱스크립트 코드의 TOKEN과 동일하게
+
+const localStorageAdapter = {
+  get: async (key)=>{
+    const v = localStorage.getItem(key);
+    if(v===null) throw new Error("not found");
+    return {key, value:v};
+  },
+  set: async (key, value)=>{ localStorage.setItem(key, value); return {key, value}; },
+  delete: async (key)=>{ localStorage.removeItem(key); return {key, deleted:true}; },
+  list: async (prefix)=>{ const keys = Object.keys(localStorage).filter(k=> !prefix || k.startsWith(prefix)); return {keys}; }
+};
+
+let jsonpCounter = 0;
+function jsonpRequest(url, params){
+  return new Promise((resolve, reject)=>{
+    const callbackName = "__dkJsonp"+(jsonpCounter++)+"_"+Date.now();
+    const script = document.createElement("script");
+    const timeout = setTimeout(()=>{ cleanup(); reject(new Error("timeout")); }, 15000);
+    function cleanup(){
+      clearTimeout(timeout);
+      try{ delete window[callbackName]; }catch(e){}
+      script.remove();
+    }
+    window[callbackName] = (data)=>{ cleanup(); resolve(data); };
+    const qs = Object.keys(params).map(k=>encodeURIComponent(k)+"="+encodeURIComponent(params[k]==null?"":params[k])).join("&");
+    script.src = url + "?" + qs + "&callback=" + callbackName;
+    script.onerror = ()=>{ cleanup(); reject(new Error("jsonp load error")); };
+    document.body.appendChild(script);
+  });
+}
+
+const remoteAdapter = {
+  get: async (key)=>{
+    const data = await jsonpRequest(APPS_SCRIPT_URL, {action:"get", key, token:API_TOKEN});
+    if(data.error) throw new Error(data.error);
+    return data;
+  },
+  set: async (key, value)=>{
+    const data = await jsonpRequest(APPS_SCRIPT_URL, {action:"set", key, value, token:API_TOKEN});
+    if(data.error) throw new Error(data.error);
+    return data;
+  },
+  delete: async (key)=>{
+    const data = await jsonpRequest(APPS_SCRIPT_URL, {action:"delete", key, token:API_TOKEN});
+    return data;
+  },
+  list: async (prefix)=>{
+    const data = await jsonpRequest(APPS_SCRIPT_URL, {action:"list", prefix:prefix||"", token:API_TOKEN});
+    if(data.error) throw new Error(data.error);
+    return data;
+  }
+};
+
+const storage = (APPS_SCRIPT_URL && APPS_SCRIPT_URL.startsWith("http"))
+  ? remoteAdapter
+  : ((typeof window!=="undefined" && window.storage && typeof window.storage.get === "function") ? window.storage : localStorageAdapter);
+
+const CATEGORY_LIST = ["AI 자동화","PR","콘텐츠 기획","미팅","기획, 분석"];
+function categorizeTitle(title){
+  if(/AI|에이전트|자동화/.test(title)) return "AI 자동화";
+  if(/보도자료|PR|홍보브리핑|견적|영상|대행사/.test(title)) return "PR";
+  if(/블로그|콘텐츠|세일즈킷|친추|좋아요|고객사례|트렌드리포트|뉴스레터/.test(title)) return "콘텐츠 기획";
+  if(/미팅/.test(title)) return "미팅";
+  if(/SEO|GEO|퍼널|GA4|사업전략|스터디|지표/.test(title)) return "기획, 분석";
+  return "기타";
+}
+const DEFAULT_CONFIG = {
+  lunchTime: "12:00",
+  fixedTasks: [
+    {title:"당일 업무 확인", dur:10},
+    {title:"경쟁사 키워드 알림뉴스 확인", dur:10},
+    {title:"포털 주요뉴스 확인 (AI·역직구산업·해외진출·산업)", dur:10},
+    {title:"네이버·구글 SEO(수동) / GEO(에이전트화) 체크", dur:10},
+    {title:"대시보드 확인 (홈페이지·SNS 방문자, 조회수, 댓글)", dur:30},
+  ],
+  quickAddTasks: [
+    {title:"AI 에이전트화", dur:60, category:"AI 자동화"},
+    {title:"보도자료 초안 작성", dur:60, category:"PR"},
+    {title:"보도자료 이미지 기획/제작", dur:30, category:"PR"},
+    {title:"보도자료 피드백 수정", dur:30, category:"PR"},
+    {title:"월간 홍보브리핑 리포트 제작/공유", dur:30, category:"PR"},
+    {title:"업체 견적 요청(영상, 홍보대행사)", dur:30, category:"PR"},
+    {title:"블로그 주제/키워드 분석(2회분)", dur:30, category:"콘텐츠 기획"},
+    {title:"블로그 자료 수집(2회분)", dur:30, category:"콘텐츠 기획"},
+    {title:"블로그 내용 검증", dur:30, category:"콘텐츠 기획"},
+    {title:"블로그 피드백 수정", dur:30, category:"콘텐츠 기획"},
+    {title:"다른 블로그 친추/좋아요", dur:20, category:"콘텐츠 기획"},
+    {title:"신규 콘텐츠 기획(고객사례, 트렌드리포트, 뉴스레터)", dur:60, category:"콘텐츠 기획"},
+    {title:"세일즈킷 제작(돌발)", dur:90, category:"콘텐츠 기획"},
+    {title:"미팅", dur:30, category:"미팅"},
+    {title:"미팅", dur:60, category:"미팅"},
+    {title:"퍼널 분석(GA4)_지표 분석", dur:30, category:"기획, 분석"},
+    {title:"사업전략팀 자료 스터디", dur:60, category:"기획, 분석"},
+    {title:"식사시간(추가)", dur:30, category:"기타"},
+    {title:"저녁시간", dur:60, category:"기타"},
+  ]
+};
+const LEAVE_LABELS = { full:"연차", half_am:"오전반차", half_pm:"오후반차", quarter:"반반차" };
+
+let today = new Date();
+let calYear = today.getFullYear();
+let calMonth = today.getMonth();
+let selectedDate = fmt(today);
+let alarmsEnabled = false;
+let firedToday = new Set();
+let storeCache = {};
+let CONFIG = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+let leaveMap = {}; // dateKey -> 'full' | 'half_am' | 'half_pm' | 'quarter'
+let draggedId = null;
+let activeQuickTab = null;
+
+function fmt(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function toMin(hhmm){ const [h,m]=hhmm.split(":").map(Number); return h*60+m; }
+function toHHMM(mins){ const h=Math.floor(mins/60)%24, m=mins%60; return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0"); }
+function isWeekend(dateKey){ const d=new Date(dateKey+"T00:00:00"); const g=d.getDay(); return g===0||g===6; }
+function isLeave(dateKey){ return leaveMap[dateKey] || null; }
+function isFullLeave(dateKey){ return leaveMap[dateKey] === "full"; }
+async function loadLeaveDates(){
+  try{
+    const res = await storage.get("leaveDates");
+    if(res && res.value){ leaveMap = JSON.parse(res.value); return; }
+  }catch(e){ }
+  leaveMap = {};
+}
+async function saveLeaveDates(){
+  try{ await storage.set("leaveDates", JSON.stringify(leaveMap)); }
+  catch(e){ console.error("leave save failed", e); }
+}
+async function setLeaveType(dateKey, type){
+  if(type === "none"){ delete leaveMap[dateKey]; }
+  else { leaveMap[dateKey] = type; }
+  await saveLeaveDates();
+  const data = await loadDay(dateKey);
+  if(type === "full"){
+    data.tasks = data.tasks.filter(t=>t.custom);
+  } else if(!isWeekend(dateKey)){
+    const hasFixed = data.tasks.some(t=>!t.custom);
+    if(!hasFixed){
+      const customTasks = data.tasks.filter(t=>t.custom);
+      data.tasks = [...buildFixedTasks(data.startTime||"09:00"), ...customTasks];
+    }
+  }
+  await saveDay(dateKey);
+  renderCalendar();
+  await showDay(dateKey);
+}
+function toast(msg){ const t=document.getElementById("toast"); t.textContent=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),2200); }
+
+async function loadConfig(){
+  try{
+    const res = await storage.get("config");
+    if(res && res.value){
+      CONFIG = JSON.parse(res.value);
+      if(!CONFIG.quickAddTasks) CONFIG.quickAddTasks = [];
+      CONFIG.quickAddTasks.forEach(t=>{
+        if(t.category==="SEO/GEO") t.category = "기획, 분석";
+        if(!t.category) t.category = categorizeTitle(t.title);
+      });
+      return;
+    }
+  }catch(e){ }
+  CONFIG = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+}
+async function saveConfig(){
+  try{ await storage.set("config", JSON.stringify(CONFIG)); }
+  catch(e){ toast("저장 실패했어요"); console.error(e); }
+}
+
+async function loadDay(dateKey){
+  if(storeCache[dateKey]) return storeCache[dateKey];
+  try{
+    const res = await storage.get("day:"+dateKey);
+    if(res && res.value){
+      const parsed = JSON.parse(res.value);
+      storeCache[dateKey] = parsed;
+      return storeCache[dateKey];
+    }
+  }catch(e){ }
+  const fresh = { startTime:"09:00", tasks: (isWeekend(dateKey)||isFullLeave(dateKey)) ? [] : buildFixedTasks("09:00") };
+  storeCache[dateKey] = fresh;
+  return fresh;
+}
+async function saveDay(dateKey){
+  try{ await storage.set("day:"+dateKey, JSON.stringify(storeCache[dateKey])); }
+  catch(e){ console.error("save failed", e); toast("⚠ 저장 실패 - 클라우드 연결을 확인해주세요"); }
+}
+function splitOneTask(baseTask, startMin, lunchTask){
+  if(!lunchTask) return [{...baseTask, time:toHHMM(startMin)}];
+  const lunchStart = toMin(lunchTask.time);
+  const lunchEnd = lunchStart + lunchTask.dur;
+  const dur = baseTask.dur;
+  if(startMin < lunchStart && startMin + dur > lunchStart){
+    const part1 = lunchStart - startMin;
+    const part2 = dur - part1;
+    const baseTitle = baseTask.title.replace(/ \(1\/2\)$/,"").replace(/ \(2\/2\)$/,"");
+    return [
+      {...baseTask, id:baseTask.id+"-a", title:baseTitle+" (1/2)", time:toHHMM(startMin), dur:part1},
+      {...baseTask, id:baseTask.id+"-b", title:baseTitle+" (2/2)", time:toHHMM(lunchEnd), dur:part2}
+    ];
+  }
+  if(startMin >= lunchStart && startMin < lunchEnd){
+    return [{...baseTask, time:toHHMM(lunchEnd)}];
+  }
+  return [{...baseTask, time:toHHMM(startMin)}];
+}
+function scheduleSequentialWithLunch(startTime, items, lunchTask){
+  let cursor = toMin(startTime);
+  const result = [];
+  items.forEach(t=>{
+    const parts = splitOneTask(t, cursor, lunchTask);
+    result.push(...parts);
+    const last = parts[parts.length-1];
+    cursor = toMin(last.time) + last.dur;
+  });
+  return result;
+}
+function buildFixedTasks(startTime){
+  const lunchTask = {id:"lunch", title:"점심시간", time:CONFIG.lunchTime, dur:60, done:false, custom:false, brk:true};
+  const fixedItems = CONFIG.fixedTasks.map((t,i)=>({id:"fixed-"+i, title:t.title, dur:t.dur, done:false, custom:false, brk:false}));
+  const scheduled = scheduleSequentialWithLunch(startTime, fixedItems, lunchTask);
+  scheduled.push(lunchTask);
+  return scheduled;
+}
+
+function renderCalendar(){
+  document.getElementById("monthLabel").textContent = calYear+"년 "+(calMonth+1)+"월";
+  const grid = document.getElementById("daysGrid");
+  grid.innerHTML="";
+  const firstDay = new Date(calYear,calMonth,1).getDay();
+  const numDays = new Date(calYear,calMonth+1,0).getDate();
+  for(let i=0;i<firstDay;i++){ const e=document.createElement("div"); e.className="day-cell empty"; grid.appendChild(e); }
+  for(let d=1; d<=numDays; d++){
+    const cellDate = new Date(calYear,calMonth,d);
+    const key = fmt(cellDate);
+    const weekend = isWeekend(key);
+    const leaveType = isLeave(key);
+    const cell = document.createElement("div");
+    cell.className="day-cell"+(weekend?" weekend":"")+(leaveType?" leave":"");
+    if(key===fmt(today)) cell.classList.add("today");
+    if(key===selectedDate) cell.classList.add("selected");
+    const tag = leaveType ? '<span class="holiday-tag">'+LEAVE_LABELS[leaveType]+'</span>' : (weekend ? '<span class="holiday-tag">휴무</span>' : '');
+    cell.innerHTML = "<span>"+d+"</span>"+tag;
+    cell.addEventListener("click", async ()=>{
+      selectedDate = key;
+      await showDay(key);
+      switchView("day");
+    });
+    grid.appendChild(cell);
+  }
+}
+
+async function showDay(dateKey){
+  const data = await loadDay(dateKey);
+  const d = new Date(dateKey+"T00:00:00");
+  const wd = ["일","월","화","수","목","금","토"][d.getDay()];
+  const weekend = isWeekend(dateKey);
+  const leaveType = isLeave(dateKey);
+  let badge = "";
+  if(leaveType) badge = '<span class="leave-badge">🏖 '+LEAVE_LABELS[leaveType]+'</span>';
+  else if(weekend) badge = '<span class="weekend-badge">휴무일</span>';
+  document.getElementById("dateTitle").innerHTML = (d.getMonth()+1)+"월 "+d.getDate()+"일 ("+wd+")"+badge;
+  document.getElementById("startTime").value = data.startTime;
+  document.getElementById("startTime").disabled = weekend||leaveType==="full";
+  document.getElementById("leaveSelect").value = leaveType || "none";
+  document.getElementById("leaveSelect").classList.toggle("on", !!leaveType);
+  renderTimeline(dateKey);
+  renderQuickAdd(dateKey);
+}
+
+function renderTimeline(dateKey){
+  const data = storeCache[dateKey];
+  const timeline = document.getElementById("timeline");
+  timeline.innerHTML = '<div class="now-line" id="nowLine"></div>';
+  const sorted = [...data.tasks].sort((a,b)=>toMin(a.time)-toMin(b.time));
+  if(sorted.length===0){
+    const empty=document.createElement("div");
+    empty.className="empty-note";
+    empty.textContent = isLeave(dateKey) ? (LEAVE_LABELS[isLeave(dateKey)]+"이에요. 필요하면 아래에서 업무를 추가할 수 있어요.") : (isWeekend(dateKey) ? "휴무일이에요. 필요하면 아래에서 업무를 추가할 수 있어요." : "오늘 등록된 업무가 없어요.");
+    timeline.appendChild(empty);
+  }
+  sorted.forEach(t=>{
+    const el = document.createElement("div");
+    el.className = "task"+(t.done?" done":"")+(t.custom?" custom":"")+(t.brk?" brk":"")+(t.id==="lunch"?" locked":"");
+    el.innerHTML = `
+      <div class="task-time">${t.time}</div>
+      <div class="task-dot"></div>
+      <input type="checkbox" ${t.done?"checked":""}>
+      <div class="task-body">
+        <div class="task-title">${t.id==="lunch"?'<span class="drag-handle">🔒</span>':'<span class="drag-handle">⋮⋮</span>'}${t.brk? "🍽 ":""}${t.title}</div>
+        <div class="task-meta">${t.dur}분 ${t.custom? "· 직접추가":""} ${t.id==="lunch"? "· 시간 고정(삭제는 가능)":"· 드래그로 이동"}</div>
+      </div>
+      <button class="task-remove">✕</button>
+    `;
+    el.querySelector("input").addEventListener("change", async (e)=>{
+      t.done = e.target.checked;
+      await saveDay(dateKey);
+      renderTimeline(dateKey);
+    });
+    el.querySelector(".task-remove").addEventListener("click", async ()=>{
+      data.tasks = data.tasks.filter(x=>x.id!==t.id);
+      await saveDay(dateKey);
+      renderTimeline(dateKey);
+      toast(t.title+" 삭제했어요");
+    });
+    if(t.id!=="lunch"){
+      el.draggable = true;
+      el.addEventListener("dragstart", ()=>{
+        draggedId = t.id;
+        el.classList.add("dragging");
+      });
+      el.addEventListener("dragend", ()=>{
+        el.classList.remove("dragging");
+        draggedId = null;
+      });
+    }
+    el.addEventListener("dragover", (e)=>{
+      if(!draggedId || draggedId===t.id) return;
+      e.preventDefault();
+      el.classList.add("drop-target");
+    });
+    el.addEventListener("dragleave", ()=>{ el.classList.remove("drop-target"); });
+    el.addEventListener("drop", async (e)=>{
+      e.preventDefault();
+      el.classList.remove("drop-target");
+      if(!draggedId || draggedId===t.id) return;
+      const rect = el.getBoundingClientRect();
+      const before = (e.clientY - rect.top) < rect.height/2;
+      await reorderTask(dateKey, draggedId, t.id, before);
+    });
+    timeline.appendChild(el);
+  });
+  updateNowLine(dateKey);
+}
+
+async function reorderTask(dateKey, sourceId, targetId, before){
+  const data = storeCache[dateKey];
+  if(sourceId === "lunch") return;
+  const arr = [...data.tasks].sort((a,b)=>toMin(a.time)-toMin(b.time));
+  const sourceIdx = arr.findIndex(t=>t.id===sourceId);
+  if(sourceIdx===-1) return;
+  const [sourceItem] = arr.splice(sourceIdx,1);
+  let targetIdx = arr.findIndex(t=>t.id===targetId);
+  if(targetIdx===-1) targetIdx = arr.length;
+  arr.splice(before?targetIdx:targetIdx+1, 0, sourceItem);
+
+  const lunchIdx = arr.findIndex(t=>t.id==="lunch");
+  const lunchTask = lunchIdx!==-1 ? arr.splice(lunchIdx,1)[0] : null;
+
+  const scheduled = scheduleSequentialWithLunch(data.startTime||"09:00", arr, lunchTask);
+  if(lunchTask) scheduled.push(lunchTask);
+  data.tasks = scheduled;
+  await saveDay(dateKey);
+  renderTimeline(dateKey);
+  toast(sourceItem.title+" 위치를 옮겼어요");
+}
+
+function renderQuickAdd(dateKey){
+  const tabsWrap = document.getElementById("quickAddTabs");
+  const wrap = document.getElementById("quickAdd");
+  tabsWrap.innerHTML="";
+  wrap.innerHTML="";
+
+  const presentCats = [...new Set(CONFIG.quickAddTasks.map(t=>t.category||"기타"))];
+  const orderedCats = [...CATEGORY_LIST.filter(c=>presentCats.includes(c)), ...presentCats.filter(c=>!CATEGORY_LIST.includes(c))];
+  if(orderedCats.length===0){ return; }
+  if(!activeQuickTab || !orderedCats.includes(activeQuickTab)) activeQuickTab = orderedCats[0];
+
+  orderedCats.forEach(cat=>{
+    const tab = document.createElement("button");
+    tab.className = "qa-tab"+(cat===activeQuickTab?" active":"");
+    tab.textContent = cat;
+    tab.addEventListener("click", ()=>{
+      activeQuickTab = cat;
+      renderQuickAdd(dateKey);
+    });
+    tabsWrap.appendChild(tab);
+  });
+
+  CONFIG.quickAddTasks.filter(t=>(t.category||"기타")===activeQuickTab).forEach(qa=>{
+    const chip = document.createElement("button");
+    chip.className="qa-chip";
+    chip.textContent = "+ "+qa.title+" ("+qa.dur+"분)";
+    chip.addEventListener("click", async ()=>{
+      const data = storeCache[dateKey];
+      const base = data.tasks.length ? data.tasks.reduce((max,t)=>Math.max(max, toMin(t.time)+t.dur), toMin(data.startTime||"09:00")) : toMin(data.startTime||"09:00");
+      const isMeal = /식사|점심|저녁/.test(qa.title);
+      const lunchTask = data.tasks.find(t=>t.id==="lunch") || null;
+      const baseTask = { id:"custom-"+Date.now(), title:qa.title, dur:qa.dur, done:false, custom:true, brk:isMeal };
+      const parts = splitOneTask(baseTask, base, lunchTask);
+      data.tasks.push(...parts);
+      await saveDay(dateKey);
+      renderTimeline(dateKey);
+      toast(qa.title+" 추가했어요"+(parts.length>1?" (점심시간 앞뒤로 나눠졌어요)":""));
+    });
+    wrap.appendChild(chip);
+  });
+}
+
+function updateNowLine(dateKey){
+  const line = document.getElementById("nowLine");
+  if(!line) return;
+  if(dateKey !== fmt(new Date())){ line.style.display="none"; return; }
+  const now = new Date();
+  const nowMin = now.getHours()*60+now.getMinutes();
+  const data = storeCache[dateKey];
+  if(!data.tasks.length){ line.style.display="none"; return; }
+  const start = Math.min(...data.tasks.map(t=>toMin(t.time)));
+  const end = data.tasks.reduce((max,t)=>Math.max(max,toMin(t.time)+t.dur), start);
+  if(nowMin < start || nowMin > end+5){ line.style.display="none"; return; }
+  const timeline = document.getElementById("timeline");
+  const pct = Math.min(1, Math.max(0,(nowMin-start)/Math.max(1,(end-start))));
+  line.style.display="block";
+  line.style.top = (pct*(timeline.scrollHeight-10)+6)+"px";
+}
+
+async function toggleAlarm(){
+  if(!alarmsEnabled){
+    if(!("Notification" in window)){ toast("이 브라우저는 알림을 지원하지 않아요"); return; }
+    const perm = await Notification.requestPermission();
+    if(perm!=="granted"){ toast("알림 권한이 필요해요"); return; }
+    alarmsEnabled = true;
+  } else { alarmsEnabled = false; }
+  updateAlarmUI();
+}
+function updateAlarmUI(){
+  const btn = document.getElementById("alarmToggle");
+  const status = document.getElementById("alarmStatus");
+  btn.textContent = alarmsEnabled ? "🔔 알림 끄기" : "🔕 알림 켜기";
+  btn.classList.toggle("on", alarmsEnabled);
+  status.textContent = alarmsEnabled ? "이 탭이 열려있는 동안 시간이 되면 알려드려요." : "알림이 꺼져 있어요.";
+}
+function checkAlarms(){
+  if(!alarmsEnabled) return;
+  const key = fmt(new Date());
+  const data = storeCache[key];
+  if(!data) return;
+  const now = new Date();
+  const nowHHMM = String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0");
+  data.tasks.forEach(t=>{
+    const fireKey = key+"-"+t.id+"-"+t.time;
+    if(t.time===nowHHMM && !firedToday.has(fireKey) && !t.done){
+      firedToday.add(fireKey);
+      new Notification("⏰ DK 업무 알림", { body: t.title+" 시작할 시간이에요 ("+t.dur+"분)" });
+      toast("⏰ "+t.title+" 시작 시간이에요");
+    }
+  });
+}
+
+function renderAdmin(){
+  const fixedWrap = document.getElementById("adminFixedList");
+  fixedWrap.innerHTML="";
+  CONFIG.fixedTasks.forEach((t,idx)=>{
+    const row = document.createElement("div");
+    row.className="admin-row";
+    row.innerHTML = `
+      <input type="text" value="${t.title.replace(/"/g,'&quot;')}" data-idx="${idx}" data-field="title">
+      <input type="number" value="${t.dur}" min="5" step="5" data-idx="${idx}" data-field="dur">
+      <span class="unit">분</span>
+      <button class="del" data-idx="${idx}">✕</button>
+    `;
+    row.querySelector('[data-field="title"]').addEventListener("input", e=>{ CONFIG.fixedTasks[idx].title = e.target.value; });
+    row.querySelector('[data-field="dur"]').addEventListener("input", e=>{ CONFIG.fixedTasks[idx].dur = Number(e.target.value)||10; });
+    row.querySelector(".del").addEventListener("click", ()=>{ CONFIG.fixedTasks.splice(idx,1); renderAdmin(); });
+    fixedWrap.appendChild(row);
+  });
+
+  document.getElementById("lunchTimeInput").value = CONFIG.lunchTime;
+
+  const quickWrap = document.getElementById("adminQuickList");
+  quickWrap.innerHTML="";
+  const presentCats = [...new Set(CONFIG.quickAddTasks.map(t=>t.category||"기타"))];
+  const orderedCats = [...CATEGORY_LIST, ...presentCats.filter(c=>!CATEGORY_LIST.includes(c))];
+  orderedCats.forEach(cat=>{
+    const block = document.createElement("div");
+    block.className="admin-cat-block";
+    const heading = document.createElement("div");
+    heading.className="admin-cat-heading";
+    heading.textContent = cat;
+    block.appendChild(heading);
+
+    CONFIG.quickAddTasks.forEach((t,idx)=>{
+      if((t.category||"기타")!==cat) return;
+      const row = document.createElement("div");
+      row.className="admin-row";
+      row.innerHTML = `
+        <input type="text" value="${t.title.replace(/"/g,'&quot;')}" data-idx="${idx}" data-field="title">
+        <input type="number" value="${t.dur}" min="5" step="5" data-idx="${idx}" data-field="dur">
+        <span class="unit">분</span>
+        <select class="cat-select" data-idx="${idx}" data-field="category">
+          ${[...CATEGORY_LIST,"기타"].map(c=>`<option value="${c}" ${c===cat?"selected":""}>${c}</option>`).join("")}
+        </select>
+        <button class="del" data-idx="${idx}">✕</button>
+      `;
+      row.querySelector('[data-field="title"]').addEventListener("input", e=>{ CONFIG.quickAddTasks[idx].title = e.target.value; });
+      row.querySelector('[data-field="dur"]').addEventListener("input", e=>{ CONFIG.quickAddTasks[idx].dur = Number(e.target.value)||30; });
+      row.querySelector('[data-field="category"]').addEventListener("change", e=>{ CONFIG.quickAddTasks[idx].category = e.target.value; renderAdmin(); });
+      row.querySelector(".del").addEventListener("click", ()=>{ CONFIG.quickAddTasks.splice(idx,1); renderAdmin(); });
+      block.appendChild(row);
+    });
+
+    const addBtn = document.createElement("button");
+    addBtn.className="add-row-btn";
+    addBtn.textContent = "+ "+cat+"에 항목 추가";
+    addBtn.addEventListener("click", ()=>{
+      CONFIG.quickAddTasks.push({title:"새 업무", dur:30, category:cat});
+      renderAdmin();
+    });
+    block.appendChild(addBtn);
+
+    quickWrap.appendChild(block);
+  });
+}
+
+// 관리자 설정은 앞으로 새로 생성되는 날짜에만 적용돼요.
+// 이미 열어본(커스터마이징한) 날짜는 덮어쓰지 않아서 드래그 순서·삭제 내용이 보존돼요.
+
+function switchView(v){
+  document.getElementById("calView").style.display = v==="cal" ? "block":"none";
+  document.getElementById("dayView").style.display = v==="day" ? "block":"none";
+  document.getElementById("adminView").style.display = v==="admin" ? "block":"none";
+  document.getElementById("btnCal").classList.toggle("active", v==="cal");
+  document.getElementById("btnDay").classList.toggle("active", v==="day");
+  document.getElementById("btnAdmin").classList.toggle("active", v==="admin");
+}
+
+document.getElementById("btnCal").addEventListener("click", ()=>{ renderCalendar(); switchView("cal"); });
+document.getElementById("btnDay").addEventListener("click", async ()=>{
+  selectedDate = fmt(new Date());
+  await showDay(selectedDate);
+  switchView("day");
+});
+document.getElementById("btnAdmin").addEventListener("click", ()=>{ renderAdmin(); switchView("admin"); });
+document.getElementById("backToCal").addEventListener("click", ()=>{ renderCalendar(); switchView("cal"); });
+document.getElementById("prevMonth").addEventListener("click", ()=>{ calMonth--; if(calMonth<0){calMonth=11; calYear--;} renderCalendar(); });
+document.getElementById("nextMonth").addEventListener("click", ()=>{ calMonth++; if(calMonth>11){calMonth=0; calYear++;} renderCalendar(); });
+
+document.getElementById("startTime").addEventListener("change", async (e)=>{
+  if(isWeekend(selectedDate)||isFullLeave(selectedDate)) return;
+  const data = storeCache[selectedDate];
+  const oldStart = data.startTime || "09:00";
+  const newStart = e.target.value;
+  const delta = toMin(newStart) - toMin(oldStart);
+  data.startTime = newStart;
+  data.tasks.forEach(t=>{ if(t.id!=="lunch") t.time = toHHMM(toMin(t.time)+delta); });
+  await saveDay(selectedDate);
+  renderTimeline(selectedDate);
+  toast("시작 시각을 "+newStart+"로 바꿨어요 (기존 순서·삭제 내용은 그대로 유지)");
+});
+document.getElementById("alarmToggle").addEventListener("click", toggleAlarm);
+document.getElementById("leaveSelect").addEventListener("change", (e)=>{ setLeaveType(selectedDate, e.target.value); });
+
+document.getElementById("addFixedRow").addEventListener("click", ()=>{
+  CONFIG.fixedTasks.push({title:"새 업무", dur:10});
+  renderAdmin();
+});
+document.getElementById("saveConfig").addEventListener("click", async ()=>{
+  CONFIG.lunchTime = document.getElementById("lunchTimeInput").value || "12:00";
+  await saveConfig();
+  toast("설정을 저장했어요 (앞으로 새로 여는 날짜부터 적용돼요)");
+});
+
+async function checkCloudStatus(){
+  const el = document.getElementById("cloudStatus");
+  if(!el) return;
+  const configured = APPS_SCRIPT_URL && APPS_SCRIPT_URL.startsWith("http");
+  if(!configured){
+    el.textContent = "💾 이 브라우저에만 저장 중 (클라우드 미설정)";
+    el.className = "cloud-status local";
+    return;
+  }
+  try{
+    await storage.list("config");
+    el.textContent = "☁ 클라우드 저장 연결됨";
+    el.className = "cloud-status ok";
+  }catch(e){
+    el.textContent = "⚠ 클라우드 연결 실패 - 저장이 안 되고 있어요";
+    el.className = "cloud-status fail";
+    console.error("cloud status check failed", e);
+  }
+}
+
+(async function init(){
+  checkCloudStatus();
+  await loadConfig();
+  await loadLeaveDates();
+  renderCalendar();
+  await showDay(selectedDate);
+  updateAlarmUI();
+  setInterval(()=>{ checkAlarms(); updateNowLine(selectedDate); }, 20000);
+})();
+</script>
+</body>
+</html>
