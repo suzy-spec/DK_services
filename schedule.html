@@ -264,7 +264,7 @@
    어느 기기·브라우저에서 열어도 같은 데이터가 보여요.
    비워두면 이 브라우저에만 저장돼요(기기별로 따로 저장).
    ============================================================ */
-const APPS_SCRIPT_URL = "https://script.google.com/a/macros/delivered.co.kr/s/AKfycbwkRzjPZLABXwfnAh7xTTCb4PlCp5TAgJT0-a83fR2fXbtHEILP2Xpub1rVdUDoGtk13A/exec"; // 예: "https://script.google.com/macros/s/AKfycb.../exec"
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw7cu6Sx2RezZZN47K48Pa3lffNEDxNPdWXEJPXiEnIMrO2H-reJBP0lhCheLZxwd7srA/exec"; // 예: "https://script.google.com/macros/s/AKfycb.../exec"
 const API_TOKEN = "schedule2026";       // 앱스크립트 코드의 TOKEN과 동일하게
 
 const localStorageAdapter = {
@@ -278,34 +278,43 @@ const localStorageAdapter = {
   list: async (prefix)=>{ const keys = Object.keys(localStorage).filter(k=> !prefix || k.startsWith(prefix)); return {keys}; }
 };
 
+let jsonpCounter = 0;
+function jsonpRequest(url, params){
+  return new Promise((resolve, reject)=>{
+    const callbackName = "__dkJsonp"+(jsonpCounter++)+"_"+Date.now();
+    const script = document.createElement("script");
+    const timeout = setTimeout(()=>{ cleanup(); reject(new Error("timeout")); }, 15000);
+    function cleanup(){
+      clearTimeout(timeout);
+      try{ delete window[callbackName]; }catch(e){}
+      script.remove();
+    }
+    window[callbackName] = (data)=>{ cleanup(); resolve(data); };
+    const qs = Object.keys(params).map(k=>encodeURIComponent(k)+"="+encodeURIComponent(params[k]==null?"":params[k])).join("&");
+    script.src = url + "?" + qs + "&callback=" + callbackName;
+    script.onerror = ()=>{ cleanup(); reject(new Error("jsonp load error")); };
+    document.body.appendChild(script);
+  });
+}
+
 const remoteAdapter = {
   get: async (key)=>{
-    const res = await fetch(`${APPS_SCRIPT_URL}?action=get&key=${encodeURIComponent(key)}&token=${encodeURIComponent(API_TOKEN)}`);
-    const data = await res.json();
+    const data = await jsonpRequest(APPS_SCRIPT_URL, {action:"get", key, token:API_TOKEN});
     if(data.error) throw new Error(data.error);
     return data;
   },
   set: async (key, value)=>{
-    const res = await fetch(APPS_SCRIPT_URL, {
-      method:"POST",
-      headers:{"Content-Type":"text/plain;charset=utf-8"},
-      body: JSON.stringify({action:"set", key, value, token:API_TOKEN})
-    });
-    const data = await res.json();
+    const data = await jsonpRequest(APPS_SCRIPT_URL, {action:"set", key, value, token:API_TOKEN});
     if(data.error) throw new Error(data.error);
     return data;
   },
   delete: async (key)=>{
-    const res = await fetch(APPS_SCRIPT_URL, {
-      method:"POST",
-      headers:{"Content-Type":"text/plain;charset=utf-8"},
-      body: JSON.stringify({action:"delete", key, token:API_TOKEN})
-    });
-    return await res.json();
+    const data = await jsonpRequest(APPS_SCRIPT_URL, {action:"delete", key, token:API_TOKEN});
+    return data;
   },
   list: async (prefix)=>{
-    const res = await fetch(`${APPS_SCRIPT_URL}?action=list&prefix=${encodeURIComponent(prefix||"")}&token=${encodeURIComponent(API_TOKEN)}`);
-    return await res.json();
+    const data = await jsonpRequest(APPS_SCRIPT_URL, {action:"list", prefix:prefix||"", token:API_TOKEN});
+    return data;
   }
 };
 
@@ -430,7 +439,6 @@ async function loadDay(dateKey){
     const res = await storage.get("day:"+dateKey);
     if(res && res.value){
       const parsed = JSON.parse(res.value);
-      parsed.tasks.forEach(t=>{ if(t.id==="lunch") t.locked = true; });
       storeCache[dateKey] = parsed;
       return storeCache[dateKey];
     }
@@ -443,18 +451,42 @@ async function saveDay(dateKey){
   try{ await storage.set("day:"+dateKey, JSON.stringify(storeCache[dateKey])); }
   catch(e){ console.error("save failed", e); }
 }
-function buildFixedTasks(startTime){
-  const lunchStart = toMin(CONFIG.lunchTime);
-  const lunchEnd = lunchStart + 60;
+function splitOneTask(baseTask, startMin, lunchTask){
+  if(!lunchTask) return [{...baseTask, time:toHHMM(startMin)}];
+  const lunchStart = toMin(lunchTask.time);
+  const lunchEnd = lunchStart + lunchTask.dur;
+  const dur = baseTask.dur;
+  if(startMin < lunchStart && startMin + dur > lunchStart){
+    const part1 = lunchStart - startMin;
+    const part2 = dur - part1;
+    const baseTitle = baseTask.title.replace(/ \(1\/2\)$/,"").replace(/ \(2\/2\)$/,"");
+    return [
+      {...baseTask, id:baseTask.id+"-a", title:baseTitle+" (1/2)", time:toHHMM(startMin), dur:part1},
+      {...baseTask, id:baseTask.id+"-b", title:baseTitle+" (2/2)", time:toHHMM(lunchEnd), dur:part2}
+    ];
+  }
+  if(startMin >= lunchStart && startMin < lunchEnd){
+    return [{...baseTask, time:toHHMM(lunchEnd)}];
+  }
+  return [{...baseTask, time:toHHMM(startMin)}];
+}
+function scheduleSequentialWithLunch(startTime, items, lunchTask){
   let cursor = toMin(startTime);
-  const items = CONFIG.fixedTasks.map((t,i)=>{
-    if(cursor < lunchEnd && cursor + t.dur > lunchStart){ cursor = lunchEnd; }
-    const item = {id:"fixed-"+i, title:t.title, time:toHHMM(cursor), dur:t.dur, done:false, custom:false, brk:false};
-    cursor += t.dur;
-    return item;
+  const result = [];
+  items.forEach(t=>{
+    const parts = splitOneTask(t, cursor, lunchTask);
+    result.push(...parts);
+    const last = parts[parts.length-1];
+    cursor = toMin(last.time) + last.dur;
   });
-  items.push({id:"lunch", title:"점심시간", time:CONFIG.lunchTime, dur:60, done:false, custom:false, brk:true, locked:true});
-  return items;
+  return result;
+}
+function buildFixedTasks(startTime){
+  const lunchTask = {id:"lunch", title:"점심시간", time:CONFIG.lunchTime, dur:60, done:false, custom:false, brk:true};
+  const fixedItems = CONFIG.fixedTasks.map((t,i)=>({id:"fixed-"+i, title:t.title, dur:t.dur, done:false, custom:false, brk:false}));
+  const scheduled = scheduleSequentialWithLunch(startTime, fixedItems, lunchTask);
+  scheduled.push(lunchTask);
+  return scheduled;
 }
 
 function renderCalendar(){
@@ -515,32 +547,29 @@ function renderTimeline(dateKey){
   }
   sorted.forEach(t=>{
     const el = document.createElement("div");
-    el.className = "task"+(t.done?" done":"")+(t.custom?" custom":"")+(t.brk?" brk":"")+(t.locked?" locked":"");
+    el.className = "task"+(t.done?" done":"")+(t.custom?" custom":"")+(t.brk?" brk":"")+(t.id==="lunch"?" locked":"");
     el.innerHTML = `
       <div class="task-time">${t.time}</div>
       <div class="task-dot"></div>
       <input type="checkbox" ${t.done?"checked":""}>
       <div class="task-body">
-        <div class="task-title">${t.locked?'<span class="drag-handle">🔒</span>':'<span class="drag-handle">⋮⋮</span>'}${t.brk? "🍽 ":""}${t.title}</div>
-        <div class="task-meta">${t.dur}분 ${t.custom? "· 직접추가":""} ${t.locked? "· 고정(이동·삭제 불가)":"· 드래그로 이동"}</div>
+        <div class="task-title">${t.id==="lunch"?'<span class="drag-handle">🔒</span>':'<span class="drag-handle">⋮⋮</span>'}${t.brk? "🍽 ":""}${t.title}</div>
+        <div class="task-meta">${t.dur}분 ${t.custom? "· 직접추가":""} ${t.id==="lunch"? "· 시간 고정(삭제는 가능)":"· 드래그로 이동"}</div>
       </div>
-      ${t.locked? "" : '<button class="task-remove">✕</button>'}
+      <button class="task-remove">✕</button>
     `;
     el.querySelector("input").addEventListener("change", async (e)=>{
       t.done = e.target.checked;
       await saveDay(dateKey);
       renderTimeline(dateKey);
     });
-    const rmBtn = el.querySelector(".task-remove");
-    if(rmBtn){
-      rmBtn.addEventListener("click", async ()=>{
-        data.tasks = data.tasks.filter(x=>x.id!==t.id);
-        await saveDay(dateKey);
-        renderTimeline(dateKey);
-        toast(t.title+" 삭제했어요");
-      });
-    }
-    if(!t.locked){
+    el.querySelector(".task-remove").addEventListener("click", async ()=>{
+      data.tasks = data.tasks.filter(x=>x.id!==t.id);
+      await saveDay(dateKey);
+      renderTimeline(dateKey);
+      toast(t.title+" 삭제했어요");
+    });
+    if(t.id!=="lunch"){
       el.draggable = true;
       el.addEventListener("dragstart", ()=>{
         draggedId = t.id;
@@ -581,20 +610,12 @@ async function reorderTask(dateKey, sourceId, targetId, before){
   if(targetIdx===-1) targetIdx = arr.length;
   arr.splice(before?targetIdx:targetIdx+1, 0, sourceItem);
 
-  const lunchStart = toMin(CONFIG.lunchTime);
-  const lunchEnd = lunchStart + 60;
-  let cursor = toMin(data.startTime||"09:00");
-  arr.forEach(t=>{
-    if(t.id === "lunch"){
-      t.time = CONFIG.lunchTime;
-      cursor = Math.max(cursor, lunchEnd);
-      return;
-    }
-    if(cursor < lunchEnd && cursor + t.dur > lunchStart){ cursor = lunchEnd; }
-    t.time = toHHMM(cursor);
-    cursor += t.dur;
-  });
-  data.tasks = arr;
+  const lunchIdx = arr.findIndex(t=>t.id==="lunch");
+  const lunchTask = lunchIdx!==-1 ? arr.splice(lunchIdx,1)[0] : null;
+
+  const scheduled = scheduleSequentialWithLunch(data.startTime||"09:00", arr, lunchTask);
+  if(lunchTask) scheduled.push(lunchTask);
+  data.tasks = scheduled;
   await saveDay(dateKey);
   renderTimeline(dateKey);
   toast(sourceItem.title+" 위치를 옮겼어요");
@@ -630,10 +651,13 @@ function renderQuickAdd(dateKey){
       const data = storeCache[dateKey];
       const base = data.tasks.length ? data.tasks.reduce((max,t)=>Math.max(max, toMin(t.time)+t.dur), toMin(data.startTime||"09:00")) : toMin(data.startTime||"09:00");
       const isMeal = /식사|점심|저녁/.test(qa.title);
-      data.tasks.push({ id:"custom-"+Date.now(), title:qa.title, time:toHHMM(base), dur:qa.dur, done:false, custom:true, brk:isMeal });
+      const lunchTask = data.tasks.find(t=>t.id==="lunch") || null;
+      const baseTask = { id:"custom-"+Date.now(), title:qa.title, dur:qa.dur, done:false, custom:true, brk:isMeal };
+      const parts = splitOneTask(baseTask, base, lunchTask);
+      data.tasks.push(...parts);
       await saveDay(dateKey);
       renderTimeline(dateKey);
-      toast(qa.title+" 추가했어요");
+      toast(qa.title+" 추가했어요"+(parts.length>1?" (점심시간 앞뒤로 나눠졌어요)":""));
     });
     wrap.appendChild(chip);
   });
