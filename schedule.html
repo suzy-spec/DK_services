@@ -258,6 +258,61 @@
 <div id="toast"></div>
 
 <script>
+/* ============================================================
+   ☁️ 클라우드 저장 설정 (구글 앱스크립트 연동)
+   배포한 웹앱 URL과 토큰을 아래 두 값에 채워넣으면
+   어느 기기·브라우저에서 열어도 같은 데이터가 보여요.
+   비워두면 이 브라우저에만 저장돼요(기기별로 따로 저장).
+   ============================================================ */
+const APPS_SCRIPT_URL = "https://script.google.com/a/macros/delivered.co.kr/s/AKfycbwkRzjPZLABXwfnAh7xTTCb4PlCp5TAgJT0-a83fR2fXbtHEILP2Xpub1rVdUDoGtk13A/exec"; // 예: "https://script.google.com/macros/s/AKfycb.../exec"
+const API_TOKEN = "schedule2026";       // 앱스크립트 코드의 TOKEN과 동일하게
+
+const localStorageAdapter = {
+  get: async (key)=>{
+    const v = localStorage.getItem(key);
+    if(v===null) throw new Error("not found");
+    return {key, value:v};
+  },
+  set: async (key, value)=>{ localStorage.setItem(key, value); return {key, value}; },
+  delete: async (key)=>{ localStorage.removeItem(key); return {key, deleted:true}; },
+  list: async (prefix)=>{ const keys = Object.keys(localStorage).filter(k=> !prefix || k.startsWith(prefix)); return {keys}; }
+};
+
+const remoteAdapter = {
+  get: async (key)=>{
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=get&key=${encodeURIComponent(key)}&token=${encodeURIComponent(API_TOKEN)}`);
+    const data = await res.json();
+    if(data.error) throw new Error(data.error);
+    return data;
+  },
+  set: async (key, value)=>{
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method:"POST",
+      headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body: JSON.stringify({action:"set", key, value, token:API_TOKEN})
+    });
+    const data = await res.json();
+    if(data.error) throw new Error(data.error);
+    return data;
+  },
+  delete: async (key)=>{
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method:"POST",
+      headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body: JSON.stringify({action:"delete", key, token:API_TOKEN})
+    });
+    return await res.json();
+  },
+  list: async (prefix)=>{
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=list&prefix=${encodeURIComponent(prefix||"")}&token=${encodeURIComponent(API_TOKEN)}`);
+    return await res.json();
+  }
+};
+
+const storage = (APPS_SCRIPT_URL && APPS_SCRIPT_URL.startsWith("http"))
+  ? remoteAdapter
+  : ((typeof window!=="undefined" && window.storage && typeof window.storage.get === "function") ? window.storage : localStorageAdapter);
+
 const CATEGORY_LIST = ["AI 자동화","PR","콘텐츠 기획","미팅","기획, 분석"];
 function categorizeTitle(title){
   if(/AI|에이전트|자동화/.test(title)) return "AI 자동화";
@@ -320,13 +375,13 @@ function isLeave(dateKey){ return leaveMap[dateKey] || null; }
 function isFullLeave(dateKey){ return leaveMap[dateKey] === "full"; }
 async function loadLeaveDates(){
   try{
-    const res = await window.storage.get("leaveDates");
+    const res = await storage.get("leaveDates");
     if(res && res.value){ leaveMap = JSON.parse(res.value); return; }
   }catch(e){ }
   leaveMap = {};
 }
 async function saveLeaveDates(){
-  try{ await window.storage.set("leaveDates", JSON.stringify(leaveMap)); }
+  try{ await storage.set("leaveDates", JSON.stringify(leaveMap)); }
   catch(e){ console.error("leave save failed", e); }
 }
 async function setLeaveType(dateKey, type){
@@ -351,7 +406,7 @@ function toast(msg){ const t=document.getElementById("toast"); t.textContent=msg
 
 async function loadConfig(){
   try{
-    const res = await window.storage.get("config");
+    const res = await storage.get("config");
     if(res && res.value){
       CONFIG = JSON.parse(res.value);
       if(!CONFIG.quickAddTasks) CONFIG.quickAddTasks = [];
@@ -365,14 +420,14 @@ async function loadConfig(){
   CONFIG = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
 }
 async function saveConfig(){
-  try{ await window.storage.set("config", JSON.stringify(CONFIG)); }
+  try{ await storage.set("config", JSON.stringify(CONFIG)); }
   catch(e){ toast("저장 실패했어요"); console.error(e); }
 }
 
 async function loadDay(dateKey){
   if(storeCache[dateKey]) return storeCache[dateKey];
   try{
-    const res = await window.storage.get("day:"+dateKey);
+    const res = await storage.get("day:"+dateKey);
     if(res && res.value){
       const parsed = JSON.parse(res.value);
       parsed.tasks.forEach(t=>{ if(t.id==="lunch") t.locked = true; });
@@ -385,7 +440,7 @@ async function loadDay(dateKey){
   return fresh;
 }
 async function saveDay(dateKey){
-  try{ await window.storage.set("day:"+dateKey, JSON.stringify(storeCache[dateKey])); }
+  try{ await storage.set("day:"+dateKey, JSON.stringify(storeCache[dateKey])); }
   catch(e){ console.error("save failed", e); }
 }
 function buildFixedTasks(startTime){
