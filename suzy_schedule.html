@@ -265,13 +265,13 @@
 
 <script>
 /* ============================================================
-   ☁️ 클라우드 저장 설정 (구글 앱스크립트 연동)
-   배포한 웹앱 URL과 토큰을 아래 두 값에 채워넣으면
+   ☁️ 클라우드 저장 설정 (Firebase Realtime Database 연동)
+   Firebase 콘솔에서 만든 Realtime Database URL을 아래에 채워넣으면
    어느 기기·브라우저에서 열어도 같은 데이터가 보여요.
    비워두면 이 브라우저에만 저장돼요(기기별로 따로 저장).
+   예: "https://dk-dashboard-xxxxx-default-rtdb.firebaseio.com"
    ============================================================ */
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz-GqkzuRfewFnedPQeSwqGm0A2qJ06cWIu1o6GF0ja9XKvKuATdFhRtM2o_73FLgqv/exec"; // 예: "https://script.google.com/macros/s/AKfycb.../exec"
-const API_TOKEN = "schedule2026";       // 앱스크립트 코드의 TOKEN과 동일하게
+const FIREBASE_URL = "https://schedule2026-6c130-default-rtdb.firebaseio.com";
 
 const localStorageAdapter = {
   get: async (key)=>{
@@ -284,48 +284,37 @@ const localStorageAdapter = {
   list: async (prefix)=>{ const keys = Object.keys(localStorage).filter(k=> !prefix || k.startsWith(prefix)); return {keys}; }
 };
 
-let jsonpCounter = 0;
-function jsonpRequest(url, params){
-  return new Promise((resolve, reject)=>{
-    const callbackName = "__dkJsonp"+(jsonpCounter++)+"_"+Date.now();
-    const script = document.createElement("script");
-    const timeout = setTimeout(()=>{ cleanup(); reject(new Error("timeout")); }, 15000);
-    function cleanup(){
-      clearTimeout(timeout);
-      try{ delete window[callbackName]; }catch(e){}
-      script.remove();
-    }
-    window[callbackName] = (data)=>{ cleanup(); resolve(data); };
-    const qs = Object.keys(params).map(k=>encodeURIComponent(k)+"="+encodeURIComponent(params[k]==null?"":params[k])).join("&");
-    script.src = url + "?" + qs + "&callback=" + callbackName;
-    script.onerror = ()=>{ cleanup(); reject(new Error("jsonp load error")); };
-    document.body.appendChild(script);
-  });
-}
-
 const remoteAdapter = {
   get: async (key)=>{
-    const data = await jsonpRequest(APPS_SCRIPT_URL, {action:"get", key, token:API_TOKEN});
-    if(data.error) throw new Error(data.error);
-    return data;
+    const res = await fetch(`${FIREBASE_URL}/dk_dashboard/${key}.json`);
+    const data = await res.json();
+    if(data === null || data === undefined) throw new Error("not_found");
+    return {key, value:data};
   },
   set: async (key, value)=>{
-    const data = await jsonpRequest(APPS_SCRIPT_URL, {action:"set", key, value, token:API_TOKEN});
-    if(data.error) throw new Error(data.error);
-    return data;
+    const res = await fetch(`${FIREBASE_URL}/dk_dashboard/${key}.json`, {
+      method:"PUT",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify(value)
+    });
+    if(!res.ok) throw new Error("write_failed");
+    return {key, value};
   },
   delete: async (key)=>{
-    const data = await jsonpRequest(APPS_SCRIPT_URL, {action:"delete", key, token:API_TOKEN});
-    return data;
+    const res = await fetch(`${FIREBASE_URL}/dk_dashboard/${key}.json`, { method:"DELETE" });
+    if(!res.ok) throw new Error("delete_failed");
+    return {key, deleted:true};
   },
   list: async (prefix)=>{
-    const data = await jsonpRequest(APPS_SCRIPT_URL, {action:"list", prefix:prefix||"", token:API_TOKEN});
-    if(data.error) throw new Error(data.error);
-    return data;
+    const res = await fetch(`${FIREBASE_URL}/dk_dashboard.json`);
+    const data = await res.json();
+    if(!data) return {keys:[]};
+    const keys = Object.keys(data).filter(k=> !prefix || k.startsWith(prefix));
+    return {keys};
   }
 };
 
-const storage = (APPS_SCRIPT_URL && APPS_SCRIPT_URL.startsWith("http"))
+const storage = (FIREBASE_URL && FIREBASE_URL.startsWith("http"))
   ? remoteAdapter
   : ((typeof window!=="undefined" && window.storage && typeof window.storage.get === "function") ? window.storage : localStorageAdapter);
 
@@ -836,7 +825,7 @@ document.getElementById("saveConfig").addEventListener("click", async ()=>{
 async function checkCloudStatus(){
   const el = document.getElementById("cloudStatus");
   if(!el) return;
-  const configured = APPS_SCRIPT_URL && APPS_SCRIPT_URL.startsWith("http");
+  const configured = FIREBASE_URL && FIREBASE_URL.startsWith("http");
   if(!configured){
     el.textContent = "💾 이 브라우저에만 저장 중 (클라우드 미설정)";
     el.className = "cloud-status local";
