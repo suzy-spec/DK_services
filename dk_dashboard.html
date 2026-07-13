@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DK Analytics Dashboard</title>
+<style>
+  :root{
+    --orange:#E85D25;
+    --orange-light:#FFF1E8;
+    --ink:#222222;
+    --gray-1:#5B5F66;
+    --gray-2:#8A8F98;
+    --line:#E7E5E1;
+    --bg:#FAFAF8;
+    --card:#FFFFFF;
+    --green:#2E9E5B;
+    --blue:#3A6EE8;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+  }
+  header{
+    background:var(--card);
+    border-bottom:1px solid var(--line);
+    position:sticky;top:0;z-index:50;
+  }
+  .nav-inner{
+    max-width:1080px;margin:0 auto;padding:0 20px;
+    display:flex;align-items:center;height:60px;gap:8px;
+  }
+  .brand{font-weight:800;font-size:15px;letter-spacing:-0.02em;margin-right:16px;white-space:nowrap;}
+  .brand span{color:var(--orange);}
+  .nav-btn{
+    position:relative;
+    padding:8px 14px;border-radius:8px;border:none;background:transparent;
+    font-size:14px;font-weight:600;color:var(--gray-1);cursor:pointer;
+    display:flex;align-items:center;gap:4px;
+  }
+  .nav-btn.active,.nav-btn:hover{background:var(--orange-light);color:var(--orange);}
+  .dropdown{position:relative;}
+  .dropdown-menu{
+    display:none;position:absolute;top:46px;left:0;background:var(--card);
+    border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.08);
+    min-width:170px;padding:6px;z-index:60;
+  }
+  .dropdown.open .dropdown-menu{display:block;}
+  .dropdown-item{
+    padding:10px 12px;border-radius:7px;font-size:13.5px;font-weight:600;color:var(--ink);
+    cursor:pointer;display:flex;align-items:center;gap:8px;
+  }
+  .dropdown-item:hover{background:var(--orange-light);color:var(--orange);}
+  main{max-width:1080px;margin:0 auto;padding:28px 20px 80px;}
+  .page-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;}
+  .page-title h1{font-size:21px;margin:0;letter-spacing:-0.02em;}
+  .page-title .sub{color:var(--gray-2);font-size:13px;margin-top:2px;}
+  .btn{
+    border:1px solid var(--line);background:var(--card);color:var(--ink);
+    padding:9px 14px;border-radius:8px;font-size:13.5px;font-weight:600;cursor:pointer;
+    display:inline-flex;align-items:center;gap:6px;
+  }
+  .btn:hover{border-color:var(--orange);color:var(--orange);}
+  .btn-primary{background:var(--orange);border-color:var(--orange);color:#fff;}
+  .btn-primary:hover{background:#d1531f;color:#fff;}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;}
+
+  .period-tabs{display:flex;gap:6px;margin:18px 0 14px;flex-wrap:wrap;}
+  .ptab{
+    padding:7px 13px;border-radius:20px;border:1px solid var(--line);background:var(--card);
+    font-size:13px;font-weight:600;color:var(--gray-1);cursor:pointer;
+  }
+  .ptab.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .range-nav{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+  .range-nav .label{font-weight:700;font-size:14.5px;min-width:150px;text-align:center;}
+  .icon-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:14px;}
+  .icon-btn:hover{border-color:var(--orange);color:var(--orange);}
+  .range-inputs{display:flex;align-items:center;gap:8px;}
+  input[type=date],input[type=number],input[type=text]{
+    border:1px solid var(--line);border-radius:7px;padding:8px 10px;font-size:13.5px;font-family:inherit;
+  }
+
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:22px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;}
+  .card .k{font-size:12.5px;color:var(--gray-2);font-weight:600;margin-bottom:6px;}
+  .card .v{font-size:26px;font-weight:800;letter-spacing:-0.02em;}
+  .card .badge{display:inline-block;margin-top:8px;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:20px;}
+  .badge.manual{background:#EFF1F4;color:var(--gray-1);}
+  .badge.ga4{background:#E8F1FF;color:var(--blue);}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:20px;}
+  .panel h3{margin:0 0 14px;font-size:14.5px;}
+
+  /* calendar */
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+  .cal-dow{text-align:center;font-size:11.5px;color:var(--gray-2);font-weight:700;padding-bottom:4px;}
+  .cal-cell{
+    aspect-ratio:1;border-radius:9px;border:1px solid var(--line);padding:6px;cursor:pointer;
+    display:flex;flex-direction:column;justify-content:space-between;background:#fff;
+  }
+  .cal-cell.empty{border:none;cursor:default;}
+  .cal-cell:hover{border-color:var(--orange);}
+  .cal-cell.has-data{background:var(--orange-light);border-color:#F3C7AC;}
+  .cal-cell.today{outline:2px solid var(--ink);outline-offset:-2px;}
+  .cal-date{font-size:12px;font-weight:700;color:var(--gray-1);}
+  .cal-dot{width:5px;height:5px;border-radius:50%;background:var(--orange);align-self:flex-end;}
+
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th,td{text-align:right;padding:9px 10px;border-bottom:1px solid var(--line);}
+  th:first-child,td:first-child{text-align:left;}
+  th{color:var(--gray-2);font-weight:700;font-size:11.5px;}
+  tfoot td{font-weight:800;background:#FAFAF8;}
+
+  .modal-bg{
+    display:none;position:fixed;inset:0;background:rgba(20,18,16,.45);z-index:100;
+    align-items:center;justify-content:center;padding:16px;
+  }
+  .modal-bg.open{display:flex;}
+  .modal{background:#fff;border-radius:16px;padding:22px;width:100%;max-width:420px;max-height:90vh;overflow:auto;}
+  .modal h3{margin:0 0 4px;font-size:16px;}
+  .modal .msub{color:var(--gray-2);font-size:12.5px;margin-bottom:16px;}
+  .field{margin-bottom:13px;}
+  .field label{display:block;font-size:12.5px;font-weight:700;color:var(--gray-1);margin-bottom:5px;}
+  .field input{width:100%;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .modal-actions{display:flex;justify-content:space-between;gap:8px;margin-top:18px;}
+  .source-toggle{display:flex;gap:6px;}
+  .source-toggle button{flex:1;padding:8px;border-radius:8px;border:1px solid var(--line);background:#fff;font-size:12.5px;font-weight:700;cursor:pointer;}
+  .source-toggle button.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .empty-state{text-align:center;padding:40px 20px;color:var(--gray-2);font-size:13.5px;}
+  .conn-dot{width:7px;height:7px;border-radius:50%;background:var(--gray-2);display:inline-block;margin-right:5px;}
+  .conn-dot.ok{background:var(--green);}
+  #report-capture{background:#fff;padding:20px;}
+  canvas{max-width:100%;}
+  @media(max-width:640px){
+    .brand{display:none;}
+    .range-nav .label{min-width:auto;}
+    .card .v{font-size:22px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="nav-inner">
+    <div class="brand">DK <span>Analytics</span></div>
+    <button class="nav-btn" id="nav-home" onclick="switchChannel('home')">🏠 홈페이지</button>
+    <div class="dropdown" id="social-dropdown">
+      <button class="nav-btn" id="nav-social" onclick="toggleDropdown(event)">📣 소셜미디어 ▾</button>
+      <div class="dropdown-menu">
+        <div class="dropdown-item" onclick="switchChannel('naverblog')">📝 네이버블로그</div>
+        <div class="dropdown-item" onclick="switchChannel('linkedin')">💼 링크드인</div>
+      </div>
+    </div>
+    <div style="margin-left:auto;font-size:11.5px;color:var(--gray-2);display:flex;align-items:center;">
+      <span class="conn-dot" id="conn-dot"></span><span id="conn-text">연결 확인 중</span>
+    </div>
+  </div>
+</header>
+
+<main id="app"></main>
+
+<!-- entry modal -->
+<div class="modal-bg" id="entry-modal">
+  <div class="modal">
+    <h3 id="modal-title">데이터 입력</h3>
+    <div class="msub" id="modal-date-label"></div>
+    <div id="modal-fields"></div>
+    <div class="modal-actions">
+      <button class="btn" style="color:#C4402A;border-color:#C4402A;" id="modal-delete" onclick="deleteEntry()">삭제</button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn" onclick="closeModal()">취소</button>
+        <button class="btn btn-primary" onclick="saveEntry()">저장</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+/* =========================================================
+   1) 데이터 저장소 — Google 스프레드시트 (Apps Script 웹앱 경유)
+   Code.gs를 Apps Script 웹앱으로 배포한 URL을 아래에 붙여넣으세요.
+   대시보드가 이 URL로 GET(전체 조회) / POST(입력·수정·삭제)를 호출합니다.
+   ========================================================= */
+const SHEET_SYNC_URL = https://script.google.com/macros/s/AKfycbzkOXERTBQ3Yt8-2zcHBCJJ6G8SaxpiTwSmCRKyE1Wbrx6kqxuk3bDsDbSpYro2SLG0EA/exec
+
+function isConfigured(){
+  return SHEET_SYNC_URL && SHEET_SYNC_URL.indexOf('여기에') === -1;
+}
+
+function loadAllData(){
+  if(!isConfigured()){
+    document.getElementById('conn-text').textContent = 'Apps Script URL 미설정';
+    render();
+    return;
+  }
+  document.getElementById('conn-text').textContent = '데이터 불러오는 중...';
+  fetch(SHEET_SYNC_URL)
+    .then(r=>r.json())
+    .then(data=>{
+      state.entries = { home: data.home||{}, naverblog: data.naverblog||{}, linkedin: data.linkedin||{} };
+      document.getElementById('conn-dot').classList.add('ok');
+      document.getElementById('conn-text').textContent = '스프레드시트 연동됨';
+      render();
+    })
+    .catch(err=>{
+      document.getElementById('conn-text').textContent = '연동 오류 (Apps Script URL/배포 설정 확인)';
+      render();
+    });
+}
+
+function writeToSheet(channel, date, payload, action){
+  return fetch(SHEET_SYNC_URL, {
+    method:'POST',
+    body: JSON.stringify({ channel, date, action: action||'upsert', ...payload })
+  }).then(r=>r.json());
+}
+
+/* =========================================================
+   2) 데이터 스키마
+   entries/{channel}/{YYYY-MM-DD} = { ...metrics, source, updatedAt }
+   channel: home | naverblog | linkedin
+   source: "manual" (수동입력) | "ga4" (자동연동, 추후 스크립트가 씀)
+   => 수동/자동이 같은 경로/같은 형식으로 저장되므로 완전히 호환됩니다.
+   ========================================================= */
+const CHANNELS = {
+  home: {
+    label: '홈페이지 (아임웹 · GA4)',
+    metrics: [
+      {key:'visitors', label:'방문자수'},
+      {key:'pageviews', label:'조회수'},
+      {key:'inquiries', label:'문의수'}
+    ],
+    allowGA4: true
+  },
+  naverblog: {
+    label: '네이버블로그',
+    metrics: [
+      {key:'visitors', label:'방문자수'},
+      {key:'postClicks', label:'게시물 클릭수(조회수)'},
+      {key:'inquiries', label:'문의수(댓글+쪽지)'}
+    ],
+    hasInquiryBreakdown: true
+  },
+  linkedin: {
+    label: '링크드인',
+    metrics: [
+      {key:'clicks', label:'클릭수'},
+      {key:'inquiries', label:'문의수(쪽지+댓글)'}
+    ],
+    hasInquiryBreakdown: true
+  }
+};
+
+let state = {
+  channel: 'home',
+  periodType: 'month',      // day | week | month | year | range
+  anchorDate: new Date(),   // for day/week/month/year navigation
+  rangeStart: null,
+  rangeEnd: null,
+  entries: {home:{}, naverblog:{}, linkedin:{}},
+  modalDate: null
+};
+
+/* ---------- 날짜 유틸 ---------- */
+function fmt(d){ return d.toISOString().slice(0,10); }
+function parseDate(s){ const [y,m,day]=s.split('-').map(Number); return new Date(y,m-1,day); }
+function startOfWeek(d){ const x=new Date(d); const day=(x.getDay()+6)%7; x.setDate(x.getDate()-day); return x; }
+function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+
+function currentRange(){
+  const a = state.anchorDate;
+  if(state.periodType==='day'){ return [fmt(a), fmt(a)]; }
+  if(state.periodType==='week'){ const s=startOfWeek(a); return [fmt(s), fmt(addDays(s,6))]; }
+  if(state.periodType==='month'){ const s=new Date(a.getFullYear(),a.getMonth(),1); const e=new Date(a.getFullYear(),a.getMonth()+1,0); return [fmt(s),fmt(e)]; }
+  if(state.periodType==='year'){ const s=new Date(a.getFullYear(),0,1); const e=new Date(a.getFullYear(),11,31); return [fmt(s),fmt(e)]; }
+  if(state.periodType==='range'){ return [state.rangeStart||fmt(a), state.rangeEnd||fmt(a)]; }
+}
+
+function rangeLabel(){
+  const a=state.anchorDate;
+  if(state.periodType==='day') return `${a.getFullYear()}.${a.getMonth()+1}.${a.getDate()}`;
+  if(state.periodType==='week'){ const s=startOfWeek(a); const e=addDays(s,6); return `${s.getMonth()+1}.${s.getDate()} - ${e.getMonth()+1}.${e.getDate()}`; }
+  if(state.periodType==='month') return `${a.getFullYear()}년 ${a.getMonth()+1}월`;
+  if(state.periodType==='year') return `${a.getFullYear()}년`;
+  if(state.periodType==='range') return `${state.rangeStart||'-'} ~ ${state.rangeEnd||'-'}`;
+}
+
+function shiftAnchor(dir){
+  const a=state.anchorDate;
+  if(state.periodType==='day') state.anchorDate=addDays(a,dir);
+  else if(state.periodType==='week') state.anchorDate=addDays(a,7*dir);
+  else if(state.periodType==='month') state.anchorDate=new Date(a.getFullYear(),a.getMonth()+dir,1);
+  else if(state.periodType==='year') state.anchorDate=new Date(a.getFullYear()+dir,0,1);
+  render();
+}
+
+/* ---------- 네비게이션 ---------- */
+function toggleDropdown(e){
+  e.stopPropagation();
+  document.getElementById('social-dropdown').classList.toggle('open');
+}
+document.addEventListener('click', ()=>document.getElementById('social-dropdown').classList.remove('open'));
+
+function switchChannel(ch){
+  state.channel = ch;
+  state.periodType = 'month';
+  state.anchorDate = new Date();
+  document.getElementById('social-dropdown').classList.remove('open');
+  document.getElementById('nav-home').classList.toggle('active', ch==='home');
+  document.getElementById('nav-social').classList.toggle('active', ch!=='home');
+  render();
+}
+
+/* ---------- 집계 ---------- */
+function aggregate(channel, start, end){
+  const cfg = CHANNELS[channel];
+  const data = state.entries[channel] || {};
+  const totals = {}; cfg.metrics.forEach(m=>totals[m.key]=0);
+  const rows = [];
+  let cursor = parseDate(start);
+  const endD = parseDate(end);
+  while(fmt(cursor) <= fmt(endD)){
+    const key = fmt(cursor);
+    const e = data[key];
+    if(e){
+      cfg.metrics.forEach(m=> totals[m.key] += Number(e[m.key]||0));
+      rows.push({date:key, ...e});
+    }
+    cursor = addDays(cursor,1);
+  }
+  return {totals, rows};
+}
+
+/* ---------- 렌더 ---------- */
+function render(){
+  const cfg = CHANNELS[state.channel];
+  const [start,end] = currentRange();
+  const {totals, rows} = aggregate(state.channel, start, end);
+
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div id="report-capture">
+    <div class="page-title">
+      <div>
+        <h1>${cfg.label}</h1>
+        <div class="sub">${rangeLabel()} 기준 데이터</div>
+      </div>
+      <div class="toolbar">
+        <button class="btn" onclick="loadAllData()">↻ 새로고침</button>
+        <button class="btn" onclick="openModalForDate('${fmt(new Date())}')">+ 오늘 데이터 입력</button>
+        <button class="btn btn-primary" onclick="exportPDF()">PDF 다운로드</button>
+      </div>
+    </div>
+
+    <div class="period-tabs">
+      ${['day','week','month','year','range'].map(p=>`
+        <div class="ptab ${state.periodType===p?'active':''}" onclick="setPeriodType('${p}')">
+          ${ {day:'일간',week:'주간',month:'월간',year:'연간',range:'기간지정'}[p] }
+        </div>`).join('')}
+    </div>
+
+    ${state.periodType==='range' ? `
+      <div class="range-nav">
+        <div class="range-inputs">
+          <input type="date" id="range-start" value="${state.rangeStart||start}" onchange="setRange()">
+          <span>~</span>
+          <input type="date" id="range-end" value="${state.rangeEnd||end}" onchange="setRange()">
+        </div>
+      </div>
+    ` : `
+      <div class="range-nav">
+        <button class="icon-btn" onclick="shiftAnchor(-1)">‹</button>
+        <div class="label">${rangeLabel()}</div>
+        <button class="icon-btn" onclick="shiftAnchor(1)">›</button>
+      </div>
+    `}
+
+    <div class="cards">
+      ${cfg.metrics.map(m=>`
+        <div class="card">
+          <div class="k">${m.label}</div>
+          <div class="v">${totals[m.key].toLocaleString()}</div>
+        </div>`).join('')}
+    </div>
+
+    ${state.periodType==='day' ? renderCalendar() : `
+      <div class="panel">
+        <h3>추이</h3>
+        <canvas id="trend-chart" height="90"></canvas>
+      </div>
+      <div class="panel">
+        <h3>일자별 내역</h3>
+        ${renderTable(cfg, rows)}
+      </div>
+    `}
+    </div>
+  `;
+
+  if(state.periodType!=='day'){
+    drawChart(cfg, start, end);
+  }
+}
+
+function renderTable(cfg, rows){
+  if(rows.length===0) return `<div class="empty-state">이 기간에 입력된 데이터가 없어요.<br>‘+ 데이터 입력’으로 추가해보세요.</div>`;
+  const sorted = [...rows].sort((a,b)=> a.date<b.date?1:-1);
+  return `
+    <table>
+      <thead><tr><th>날짜</th>${cfg.metrics.map(m=>`<th>${m.label}</th>`).join('')}<th>구분</th><th></th></tr></thead>
+      <tbody>
+        ${sorted.map(r=>`
+          <tr>
+            <td>${r.date}</td>
+            ${cfg.metrics.map(m=>`<td>${Number(r[m.key]||0).toLocaleString()}</td>`).join('')}
+            <td><span class="badge ${r.source==='ga4'?'ga4':'manual'}">${r.source==='ga4'?'GA4 자동':'수동'}</span></td>
+            <td><span class="btn" style="padding:4px 9px;font-size:11.5px;" onclick="openModalForDate('${r.date}')">수정</span></td>
+          </tr>`).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function renderCalendar(){
+  const a = state.anchorDate;
+  const monthAnchor = new Date(a.getFullYear(), a.getMonth(), 1);
+  const firstDow = (monthAnchor.getDay()+6)%7; // mon=0
+  const daysInMonth = new Date(a.getFullYear(), a.getMonth()+1, 0).getDate();
+  const data = state.entries[state.channel] || {};
+  const todayStr = fmt(new Date());
+
+  let cells = '';
+  for(let i=0;i<firstDow;i++) cells += `<div class="cal-cell empty"></div>`;
+  for(let d=1; d<=daysInMonth; d++){
+    const dateObj = new Date(a.getFullYear(), a.getMonth(), d);
+    const key = fmt(dateObj);
+    const has = !!data[key];
+    cells += `
+      <div class="cal-cell ${has?'has-data':''} ${key===todayStr?'today':''}" onclick="openModalForDate('${key}')">
+        <div class="cal-date">${d}</div>
+        ${has?'<div class="cal-dot"></div>':''}
+      </div>`;
+  }
+  return `
+    <div class="panel">
+      <h3>${a.getFullYear()}년 ${a.getMonth()+1}월 캘린더 <span style="font-weight:400;color:var(--gray-2);font-size:12px;">— 날짜를 클릭해 입력/수정</span></h3>
+      <div class="cal-grid">
+        ${['월','화','수','목','금','토','일'].map(d=>`<div class="cal-dow">${d}</div>`).join('')}
+        ${cells}
+      </div>
+    </div>
+  `;
+}
+
+let chartInstance = null;
+function drawChart(cfg, start, end){
+  const ctx = document.getElementById('trend-chart');
+  if(!ctx) return;
+  const data = state.entries[state.channel] || {};
+  const labels = []; const series = {}; cfg.metrics.forEach(m=>series[m.key]=[]);
+  let cursor = parseDate(start); const endD = parseDate(end);
+  while(fmt(cursor) <= fmt(endD)){
+    const key = fmt(cursor);
+    labels.push(key.slice(5));
+    const e = data[key] || {};
+    cfg.metrics.forEach(m=> series[m.key].push(Number(e[m.key]||0)));
+    cursor = addDays(cursor,1);
+  }
+  const colors = ['#E85D25','#3A6EE8','#2E9E5B'];
+  if(chartInstance) chartInstance.destroy();
+  chartInstance = new Chart(ctx, {
+    type:'line',
+    data:{ labels, datasets: cfg.metrics.map((m,i)=>({
+      label:m.label, data:series[m.key], borderColor:colors[i%colors.length],
+      backgroundColor:colors[i%colors.length]+'22', tension:.3, fill:true, pointRadius:2
+    })) },
+    options:{ responsive:true, plugins:{legend:{position:'bottom', labels:{boxWidth:10,font:{size:11}}}},
+      scales:{ x:{ticks:{font:{size:10}}}, y:{ticks:{font:{size:10}},beginAtZero:true} } }
+  });
+}
+
+function setPeriodType(p){ state.periodType = p; render(); }
+function setRange(){
+  state.rangeStart = document.getElementById('range-start').value;
+  state.rangeEnd = document.getElementById('range-end').value;
+  render();
+}
+
+/* ---------- 입력 모달 ---------- */
+function openModalForDate(dateStr){
+  state.modalDate = dateStr;
+  const cfg = CHANNELS[state.channel];
+  const existing = (state.entries[state.channel]||{})[dateStr] || {};
+  document.getElementById('modal-title').textContent = `${cfg.label} 데이터`;
+  document.getElementById('modal-date-label').textContent = dateStr;
+
+  let html = '';
+  if(cfg.allowGA4){
+    html += `
+      <div class="field">
+        <label>데이터 구분</label>
+        <div class="source-toggle">
+          <button type="button" id="src-manual" class="${existing.source!=='ga4'?'active':''}" onclick="setSource('manual')">수동 입력</button>
+          <button type="button" id="src-ga4" class="${existing.source==='ga4'?'active':''}" onclick="setSource('ga4')">GA4 자동값 보정</button>
+        </div>
+      </div>`;
+  }
+  cfg.metrics.forEach(m=>{
+    if(m.key==='inquiries' && cfg.hasInquiryBreakdown){
+      html += `
+        <div class="row2">
+          <div class="field"><label>댓글</label><input type="number" id="f_comments" min="0" value="${existing.comments||0}" oninput="syncInquiries()"></div>
+          <div class="field"><label>쪽지</label><input type="number" id="f_messages" min="0" value="${existing.messages||0}" oninput="syncInquiries()"></div>
+        </div>
+        <div class="field"><label>${m.label} (자동합산)</label><input type="number" id="f_${m.key}" value="${existing[m.key]||0}" readonly style="background:#F5F5F3;"></div>
+      `;
+    } else {
+      html += `<div class="field"><label>${m.label}</label><input type="number" id="f_${m.key}" min="0" value="${existing[m.key]||0}"></div>`;
+    }
+  });
+  document.getElementById('modal-fields').innerHTML = html;
+  document.getElementById('modal-delete').style.display = state.entries[state.channel][dateStr] ? 'inline-flex' : 'none';
+  state._selectedSource = existing.source || 'manual';
+  document.getElementById('entry-modal').classList.add('open');
+}
+function setSource(s){
+  state._selectedSource = s;
+  document.getElementById('src-manual').classList.toggle('active', s==='manual');
+  document.getElementById('src-ga4').classList.toggle('active', s==='ga4');
+}
+function syncInquiries(){
+  const c = Number(document.getElementById('f_comments').value||0);
+  const msg = Number(document.getElementById('f_messages').value||0);
+  document.getElementById('f_inquiries').value = c+msg;
+}
+function closeModal(){ document.getElementById('entry-modal').classList.remove('open'); }
+
+function saveEntry(){
+  if(!isConfigured()){ alert('먼저 SHEET_SYNC_URL에 Apps Script 웹앱 URL을 넣어주세요.'); return; }
+  const cfg = CHANNELS[state.channel];
+  const payload = { source: state._selectedSource || 'manual', updatedAt: Date.now() };
+  cfg.metrics.forEach(m=> payload[m.key] = Number(document.getElementById('f_'+m.key).value||0));
+  if(cfg.hasInquiryBreakdown){
+    payload.comments = Number(document.getElementById('f_comments').value||0);
+    payload.messages = Number(document.getElementById('f_messages').value||0);
+  }
+  const saveBtn = document.querySelector('.modal-actions .btn-primary');
+  if(saveBtn){ saveBtn.disabled = true; saveBtn.textContent = '저장 중...'; }
+  writeToSheet(state.channel, state.modalDate, payload, 'upsert')
+    .then(res=>{
+      if(!res.ok) throw new Error(res.error||'알 수 없는 오류');
+      state.entries[state.channel][state.modalDate] = payload; // 낙관적 갱신
+      closeModal();
+      render();
+    })
+    .catch(e=>alert('저장 실패: '+e.message))
+    .finally(()=>{ if(saveBtn){ saveBtn.disabled=false; saveBtn.textContent='저장'; } });
+}
+function deleteEntry(){
+  if(!confirm(state.modalDate+' 데이터를 삭제할까요?')) return;
+  writeToSheet(state.channel, state.modalDate, {}, 'delete')
+    .then(res=>{
+      if(!res.ok) throw new Error(res.error||'알 수 없는 오류');
+      delete state.entries[state.channel][state.modalDate];
+      closeModal();
+      render();
+    })
+    .catch(e=>alert('삭제 실패: '+e.message));
+}
+
+/* ---------- PDF 다운로드 ---------- */
+function exportPDF(){
+  const target = document.getElementById('report-capture');
+  html2canvas(target, {scale:2, backgroundColor:'#ffffff'}).then(canvas=>{
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p','mm','a4');
+    const pageW = 210, pageH = 297;
+    const imgW = pageW - 20;
+    const imgH = canvas.height * imgW / canvas.width;
+    let heightLeft = imgH, position = 10;
+    const imgData = canvas.toDataURL('image/png');
+    pdf.addImage(imgData,'PNG',10,position,imgW,imgH);
+    heightLeft -= (pageH-20);
+    while(heightLeft > 0){
+      position = heightLeft - imgH + 10;
+      pdf.addPage();
+      pdf.addImage(imgData,'PNG',10,position,imgW,imgH);
+      heightLeft -= (pageH-20);
+    }
+    const cfg = CHANNELS[state.channel];
+    pdf.save(`DK_${cfg.label.replace(/\s/g,'')}_${rangeLabel().replace(/\s/g,'')}.pdf`);
+  });
+}
+
+/* ---------- init ---------- */
+document.getElementById('nav-home').classList.add('active');
+loadAllData();
+// 다른 기기/브라우저에서의 변경사항을 주기적으로 반영 (실시간은 아니지만 3분마다 새로고침)
+setInterval(loadAllData, 3*60*1000);
+</script>
+</body>
+</html>
