@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>데일리 GEO 체크 — 딜리버드코리아</title>
+<style>
+  :root{
+    --dk-orange:#E8622C;
+    --dk-orange-light:#FBEAE0;
+    --dk-orange-dark:#A8431A;
+    --ink:#1F2328;
+    --ink-soft:#5B5F66;
+    --ink-faint:#9497A0;
+    --line:#E4E2DC;
+    --paper:#FAF9F6;
+    --card:#FFFFFF;
+    --ok:#2E7D4F;
+    --ok-bg:#E7F4EC;
+    --bad:#B23B2E;
+    --bad-bg:#FBEAE7;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Malgun Gothic",sans-serif;
+    padding:32px 20px 80px;
+  }
+  .wrap{max-width:780px;margin:0 auto;}
+  .eyebrow{
+    font-size:12px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--dk-orange-dark);font-weight:700;margin:0 0 6px;
+  }
+  h1{font-size:26px;margin:0 0 6px;font-weight:800;letter-spacing:-.01em;}
+  .sub{color:var(--ink-soft);font-size:14px;margin:0 0 22px;}
+
+  .incognito-banner{
+    display:flex;gap:12px;align-items:flex-start;
+    background:var(--ink);color:#fff;
+    border-radius:10px;padding:14px 16px;margin-bottom:26px;
+  }
+  .incognito-banner .mark{
+    flex:none;width:22px;height:22px;border-radius:50%;
+    background:var(--dk-orange);color:#fff;font-size:13px;font-weight:800;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .incognito-banner strong{display:block;font-size:14px;margin-bottom:2px;}
+  .incognito-banner span{font-size:13px;color:#D7D5CF;line-height:1.5;}
+
+  .toolbar{
+    display:flex;justify-content:space-between;align-items:center;
+    margin:0 0 14px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  .toolbar .count{font-size:13px;color:var(--ink-soft);}
+  .reset-btn{
+    font-size:12px;color:var(--ink-soft);background:none;border:1px solid var(--line);
+    border-radius:6px;padding:5px 10px;cursor:pointer;
+  }
+  .reset-btn:hover{border-color:var(--ink-faint);}
+
+  .prompt-card{
+    background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:16px 18px;margin-bottom:14px;
+  }
+  .prompt-card .label{font-size:11px;color:var(--ink-faint);font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-bottom:4px;}
+  .prompt-card .q{font-size:15px;font-weight:600;margin:0;}
+  .no-prefill-badge{
+    font-size:10px;font-weight:700;color:var(--ink-faint);
+    border:1px solid var(--line);border-radius:5px;padding:2px 6px;margin-left:8px;
+  }
+
+  .row{display:flex;flex-direction:column;gap:8px;}
+  .platform{
+    display:flex;align-items:center;gap:10px;
+    border:1px solid var(--line);border-radius:8px;
+    padding:8px 8px 8px 12px;width:100%;
+  }
+  .platform .qtext{font-size:13px;color:var(--ink);flex:1;}
+  .platform a.copy-link{
+    font-size:12px;font-weight:600;color:var(--dk-orange-dark);text-decoration:none;flex:none;
+  }
+  .platform a.copy-link:hover{text-decoration:underline;}
+
+  .status-toggle{display:flex;gap:6px;flex:none;}
+  .status-toggle button{
+    font-size:12px;font-weight:700;border-radius:6px;border:1px solid var(--line);
+    background:#fff;cursor:pointer;padding:6px 10px;color:var(--ink-faint);line-height:1;
+  }
+  .status-toggle button.ok-btn.active{background:var(--ok-bg);border-color:var(--ok);color:var(--ok);}
+  .status-toggle button.bad-btn.active{background:var(--bad-bg);border-color:var(--bad);color:var(--bad);}
+
+  .engine-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .engine-head a.open-link{font-size:13px;font-weight:600;color:var(--dk-orange-dark);text-decoration:none;}
+  .engine-head a.open-link:hover{text-decoration:underline;}
+
+  .paste-box{
+    margin-top:24px;background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:16px 18px;
+  }
+  .paste-box h2{font-size:14px;margin:0 0 6px;font-weight:700;}
+  .paste-box p{font-size:12px;color:var(--ink-soft);margin:0 0 12px;}
+  .copy-btn{
+    background:var(--dk-orange);color:#fff;border:none;border-radius:8px;
+    padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;
+  }
+  .copy-btn:hover{background:var(--dk-orange-dark);}
+  .copy-btn.copied{background:var(--ok);}
+
+  .admin-btn{
+    font-size:12px;color:var(--dk-orange-dark);background:none;border:1px solid var(--dk-orange);
+    border-radius:6px;padding:5px 10px;cursor:pointer;font-weight:600;
+  }
+  .admin-btn:hover{background:var(--dk-orange-light);}
+
+  .admin-panel{
+    background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:16px 18px;margin-bottom:14px;
+  }
+  .admin-panel h2{font-size:14px;margin:0 0 4px;font-weight:700;}
+  .admin-panel .sync-status{font-size:11px;color:var(--ink-faint);margin:0 0 12px;}
+  .admin-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+  .admin-row input[type=text]{
+    flex:1;font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:6px;
+    color:var(--ink);font-family:inherit;
+  }
+  .admin-row .del-btn{
+    flex:none;width:28px;height:28px;border-radius:6px;border:1px solid var(--line);
+    background:#fff;color:var(--bad);cursor:pointer;font-size:14px;line-height:1;
+  }
+  .admin-row .del-btn:hover{background:var(--bad-bg);border-color:var(--bad);}
+  .admin-actions{display:flex;gap:8px;margin-top:10px;}
+  .admin-add-btn{
+    font-size:12px;color:var(--ink-soft);background:none;border:1px dashed var(--line);
+    border-radius:6px;padding:7px 12px;cursor:pointer;
+  }
+  .admin-add-btn:hover{border-color:var(--ink-faint);}
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Deliverd Korea · GEO check</p>
+  <h1>데일리 GEO 체크</h1>
+  <p class="sub">아침에 엔진별 링크 클릭(5문항 한번에 질문) → 답변 확인 → 상태 체크. 끝나면 아래에서 "저장하기"를 누르면 구글시트에 바로 쌓여요.</p>
+
+  <div class="incognito-banner">
+    <div class="mark">!</div>
+    <div>
+      <strong>꼭 시크릿(Incognito) 창에서 열기</strong>
+      <span>로그인 상태로 열면 개인화된 답변이 나와서 일반 사용자 기준과 달라져요. Ctrl+Shift+N (Mac: Cmd+Shift+N)으로 새 시크릿 창을 먼저 연 다음, 이 페이지의 링크를 그 창에 붙여넣어 열어주세요.</span>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <span class="count" id="progress">0 / 15 체크 완료</span>
+    <div style="display:flex;gap:8px;">
+      <button class="admin-btn" onclick="toggleAdmin()">질문 관리</button>
+      <button class="reset-btn" onclick="resetAll()">전체 초기화</button>
+    </div>
+  </div>
+
+  <div class="admin-panel" id="adminPanel" style="display:none;">
+    <h2>질문 관리</h2>
+    <p class="sync-status" id="syncStatus">Firebase 연결 중...</p>
+    <div id="adminList"></div>
+    <div class="admin-actions">
+      <button class="admin-add-btn" onclick="addQuestionField()">+ 질문 추가</button>
+      <button class="copy-btn" onclick="saveQuestions()">저장</button>
+    </div>
+  </div>
+
+  <div id="prompts"></div>
+
+  <div class="paste-box">
+    <h2>스프레드시트에 저장</h2>
+    <p>미리보기 확인 후 저장하면 구글시트에 새 행으로 바로 누적돼요.</p>
+    <textarea id="sheetPreview" readonly style="width:100%;min-height:70px;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--ink-soft);resize:vertical;background:var(--paper);margin-bottom:10px;"></textarea>
+    <button class="copy-btn" id="saveBtn" onclick="saveToSheet()">오늘 기록 저장하기</button>
+    <button class="copy-btn" id="copyBtn" onclick="copyForSheet()" style="background:#fff;color:var(--dk-orange-dark);border:1px solid var(--dk-orange);">복사하기 (백업용)</button>
+    <span id="copyStatus" style="font-size:12px;color:var(--ink-soft);margin-left:10px;"></span>
+  </div>
+</div>
+
+<script>
+const DEFAULT_QUESTIONS = [
+  "역직구 대행 업체 추천해줘",
+  "딜리버드코리아가 뭐야",
+  "해외판매 대행사 추천해줘",
+  "역직구 스타트업 사례 알려줄래",
+  "딜리버드파트너스가 뭐야"
+];
+
+let QUESTIONS = DEFAULT_QUESTIONS.slice();
+
+function combinedPrompt(){
+  return "아래 질문 " + QUESTIONS.length + "개에 각각 번호를 매겨서 답해줘. 각 답변마다 정보의 출처를 알려주고, 정확히 3번 이상 교차검증한 뒤 답변해줘. 관련 내용을 찾을 수 없으면 모른다고 말해줘.\n" +
+    QUESTIONS.map((q, i) => (i+1) + ". " + q).join("\n");
+}
+
+const PLATFORMS = [
+  { name: "ChatGPT", prefill: true, build: () => "https://chatgpt.com/?q=" + encodeURIComponent(combinedPrompt()) },
+  { name: "Perplexity", prefill: true, build: () => "https://www.perplexity.ai/search?q=" + encodeURIComponent(combinedPrompt()) },
+  { name: "Gemini", prefill: false, build: () => "https://gemini.google.com/app" }
+];
+
+// ── Firebase (질문 목록 클라우드 저장) ──────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyDZiTGRqZXsNMIolU70YzTgyb_Tp17eJk8",
+  authDomain: "dksuzy.firebaseapp.com",
+  databaseURL: "https://dksuzy-default-rtdb.firebaseio.com",
+  projectId: "dksuzy",
+  storageBucket: "dksuzy.firebasestorage.app",
+  messagingSenderId: "669391324319",
+  appId: "1:669391324319:web:79e90d39bdfd1c08c28eaa"
+};
+firebase.initializeApp(firebaseConfig);
+const questionsRef = firebase.database().ref("geo-questions/list");
+
+function setSyncStatus(text, color){
+  const el = document.getElementById("syncStatus");
+  if(el){ el.textContent = text; el.style.color = color || "var(--ink-faint)"; }
+}
+
+questionsRef.on("value", (snapshot) => {
+  const val = snapshot.val();
+  if(Array.isArray(val) && val.length){
+    QUESTIONS = val;
+  } else if(val === null){
+    questionsRef.set(DEFAULT_QUESTIONS);
+    QUESTIONS = DEFAULT_QUESTIONS.slice();
+  }
+  setSyncStatus("Firebase와 동기화됨 · 다른 기기에서 수정해도 여기 자동 반영돼요", "var(--ok)");
+  Object.keys(state).forEach(k => delete state[k]);
+  render();
+  renderAdminList();
+}, (err) => {
+  setSyncStatus("Firebase 연결 실패 — 기본 질문으로 동작 중 (" + err.message + ")", "var(--bad)");
+  QUESTIONS = DEFAULT_QUESTIONS.slice();
+  render();
+  renderAdminList();
+});
+
+// 배포한 Apps Script 웹 앱 URL을 여기 붙여넣으면 저장 버튼이 바로 작동해요.
+const WEBAPP_URL = "PASTE_YOUR_WEBAPP_URL_HERE";
+
+const state = {};
+
+function cellId(ni, qi){ return "n" + ni + "_q" + qi; }
+
+function copyText(text, btnEl, doneLabel){
+  const showDone = (ok) => {
+    if(btnEl){
+      const original = btnEl.textContent;
+      btnEl.textContent = ok ? (doneLabel || "복사됨") : "복사 실패 — 직접 선택해 복사하세요";
+      setTimeout(() => { btnEl.textContent = original; }, ok ? 1200 : 2500);
+    }
+  };
+  const fallback = () => {
+    try{
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      showDone(ok);
+    }catch(err){
+      showDone(false);
+    }
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(() => showDone(true)).catch(fallback);
+  } else {
+    fallback();
+  }
+}
+
+function render(){
+  const container = document.getElementById("prompts");
+  container.innerHTML = "";
+  PLATFORMS.forEach((p, ni) => {
+    const card = document.createElement("div");
+    card.className = "prompt-card";
+
+    const label = document.createElement("div");
+    label.className = "label";
+    label.textContent = "엔진 " + (ni + 1);
+    card.appendChild(label);
+
+    const head = document.createElement("div");
+    head.className = "engine-head";
+
+    const nameWrap = document.createElement("div");
+    const qEl = document.createElement("span");
+    qEl.className = "q";
+    qEl.textContent = p.name;
+    nameWrap.appendChild(qEl);
+    if(!p.prefill){
+      const badge = document.createElement("span");
+      badge.className = "no-prefill-badge";
+      badge.textContent = "질문 자동입력 미지원";
+      nameWrap.appendChild(badge);
+    }
+    head.appendChild(nameWrap);
+
+    const linkWrap = document.createElement("div");
+    linkWrap.style.display = "flex";
+    linkWrap.style.gap = "10px";
+
+    const copyBtn = document.createElement("a");
+    copyBtn.className = "open-link";
+    copyBtn.href = "#";
+    copyBtn.textContent = "질문 복사";
+    copyBtn.onclick = (e) => { e.preventDefault(); copyText(combinedPrompt(), copyBtn, "복사됨 ✓"); };
+    linkWrap.appendChild(copyBtn);
+
+    const a = document.createElement("a");
+    a.className = "open-link";
+    a.href = p.build();
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.textContent = (p.prefill ? "질문 5개 한번에 열기" : p.name + " 열기") + " →";
+    linkWrap.appendChild(a);
+
+    head.appendChild(linkWrap);
+
+    card.appendChild(head);
+
+    const row = document.createElement("div");
+    row.className = "row";
+
+    QUESTIONS.forEach((q, qi) => {
+      const id = cellId(ni, qi);
+      if(!(id in state)) state[id] = null;
+
+      const platform = document.createElement("div");
+      platform.className = "platform";
+
+      const label2 = document.createElement("span");
+      label2.className = "qtext";
+      label2.textContent = (qi+1) + ". " + q;
+      platform.appendChild(label2);
+
+      const toggle = document.createElement("div");
+      toggle.className = "status-toggle";
+
+      const ok = document.createElement("button");
+      ok.className = "ok-btn";
+      ok.textContent = "이상없음";
+      ok.onclick = () => setState(id, true);
+
+      const bad = document.createElement("button");
+      bad.className = "bad-btn";
+      bad.textContent = "확인필요";
+      bad.onclick = () => setState(id, false);
+
+      if(state[id] === true) ok.classList.add("active");
+      if(state[id] === false) bad.classList.add("active");
+
+      toggle.appendChild(ok);
+      toggle.appendChild(bad);
+      platform.appendChild(toggle);
+      row.appendChild(platform);
+    });
+
+    card.appendChild(row);
+    container.appendChild(card);
+  });
+  updateProgress();
+}
+
+function renderAdminList(){
+  const list = document.getElementById("adminList");
+  if(!list) return;
+  list.innerHTML = "";
+  QUESTIONS.forEach((q, i) => {
+    const row = document.createElement("div");
+    row.className = "admin-row";
+
+    const input = document.createElement("input");
+    input.type = "text";
+    input.value = q;
+    input.dataset.idx = i;
+    row.appendChild(input);
+
+    const del = document.createElement("button");
+    del.className = "del-btn";
+    del.textContent = "×";
+    del.title = "이 질문 삭제";
+    del.onclick = () => { row.remove(); };
+    row.appendChild(del);
+
+    list.appendChild(row);
+  });
+}
+
+function addQuestionField(){
+  const list = document.getElementById("adminList");
+  const row = document.createElement("div");
+  row.className = "admin-row";
+
+  const input = document.createElement("input");
+  input.type = "text";
+  input.value = "";
+  input.placeholder = "새 질문 입력";
+  row.appendChild(input);
+
+  const del = document.createElement("button");
+  del.className = "del-btn";
+  del.textContent = "×";
+  del.onclick = () => { row.remove(); };
+  row.appendChild(del);
+
+  list.appendChild(row);
+  input.focus();
+}
+
+function saveQuestions(){
+  const inputs = document.querySelectorAll("#adminList input[type=text]");
+  const newQuestions = Array.from(inputs).map(i => i.value.trim()).filter(v => v.length > 0);
+
+  if(newQuestions.length === 0){
+    setSyncStatus("질문이 1개 이상 있어야 저장돼요.", "var(--bad)");
+    return;
+  }
+
+  setSyncStatus("저장 중...", "var(--ink-faint)");
+  questionsRef.set(newQuestions)
+    .then(() => {
+      setSyncStatus("저장됐어요 — Firebase에 반영됨", "var(--ok)");
+      // questionsRef.on("value")가 자동으로 QUESTIONS 갱신 + render() 호출함
+    })
+    .catch((err) => {
+      setSyncStatus("저장 실패: " + err.message, "var(--bad)");
+    });
+}
+
+function toggleAdmin(){
+  const panel = document.getElementById("adminPanel");
+  panel.style.display = panel.style.display === "none" ? "block" : "none";
+  if(panel.style.display === "block") renderAdminList();
+}
+function setState(id, val){
+  state[id] = state[id] === val ? null : val;
+  render();
+}
+
+function resetAll(){
+  Object.keys(state).forEach(k => state[k] = null);
+  render();
+}
+
+function updateProgress(){
+  const total = PLATFORMS.length * QUESTIONS.length;
+  const checked = Object.values(state).filter(v => v !== null).length;
+  document.getElementById("progress").textContent = checked + " / " + total + " 체크 완료";
+  updateSheetPreview();
+}
+
+function buildSheetRow(){
+  const today = new Date().toISOString().slice(0,10);
+  const cells = [today];
+  const issues = [];
+  PLATFORMS.forEach((p, ni) => {
+    QUESTIONS.forEach((q, qi) => {
+      const v = state[cellId(ni, qi)];
+      const label = v === true ? "이상없음" : v === false ? "확인필요" : "";
+      cells.push(label);
+      if(v === false) issues.push(p.name + " Q" + (qi+1));
+    });
+  });
+  cells.push(issues.length ? issues.join(", ") : "");
+  return cells;
+}
+
+function updateSheetPreview(){
+  const box = document.getElementById("sheetPreview");
+  if(!box) return;
+  const cells = buildSheetRow();
+  box.value = cells.map(c => c === "" ? "(빈칸)" : c).join(" | ");
+}
+
+function copyForSheet(){
+  const cells = buildSheetRow();
+  const btn = document.getElementById("copyBtn");
+  const status = document.getElementById("copyStatus");
+  copyText(cells.join("\t"), btn, "복사됨 — 표에 붙여넣으세요");
+  if(status){
+    status.textContent = "위 미리보기 내용이 클립보드에 담겼어요.";
+    setTimeout(() => { status.textContent = ""; }, 3000);
+  }
+}
+
+function saveToSheet(){
+  const status = document.getElementById("copyStatus");
+  const btn = document.getElementById("saveBtn");
+
+  if(!WEBAPP_URL || WEBAPP_URL.indexOf("PASTE_YOUR") === 0){
+    status.textContent = "저장 URL이 아직 설정 안 됐어요. Apps Script 배포 후 URL을 넣어주세요.";
+    status.style.color = "var(--bad)";
+    return;
+  }
+
+  const cells = buildSheetRow();
+  const payload = {
+    date: cells[0],
+    statuses: cells.slice(1, cells.length - 1),
+    note: cells[cells.length - 1]
+  };
+
+  const original = btn.textContent;
+  btn.textContent = "저장 중...";
+  btn.disabled = true;
+
+  fetch(WEBAPP_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(payload)
+  })
+    .then(() => {
+      btn.textContent = "저장됨 ✓";
+      status.style.color = "var(--ok)";
+      status.textContent = "구글시트에 오늘 기록이 추가됐어요.";
+    })
+    .catch(() => {
+      btn.textContent = "저장 실패";
+      status.style.color = "var(--bad)";
+      status.textContent = "저장에 실패했어요. 아래 '복사하기'로 직접 붙여넣어 주세요.";
+    })
+    .finally(() => {
+      btn.disabled = false;
+      setTimeout(() => {
+        btn.textContent = original;
+        status.textContent = "";
+      }, 3000);
+    });
+}
+
+render();
+</script>
+</body>
+</html>
