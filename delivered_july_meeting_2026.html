@@ -1,0 +1,519 @@
+[delivered_july_meeting_2026.html](https://github.com/user-attachments/files/29995218/delivered_july_meeting_2026.html)
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="slides-format" content="viewport">
+    <title>딜리버드코리아 7월 월간 미팅</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style type="text/tailwindcss">
+        @theme {
+            --color-bg: #0c1425;
+            --color-bg-deep: #060e1a;
+            --color-surface: #162035;
+            --color-text: #f1f5f9;
+            --color-text-secondary: #cbd5e1;
+            --color-text-muted: #94a3b8;
+            --color-accent-1: #3B82F6;
+            --color-accent-2: #60A5FA;
+            --color-accent-3: #93C5FD;
+            --color-glass-bg: rgba(255,255,255,0.05);
+            --color-glass-border: rgba(255,255,255,0.09);
+            --color-vignette: rgba(0,0,0,0.45);
+            --font-display: 'Instrument Serif', Georgia, serif;
+            --font-body: 'DM Sans', system-ui, sans-serif;
+        }
+    </style>
+    <style>
+        :root { --color-bg:#0c1425; --color-text:#f1f5f9; --glow-color-rgb:59,130,246; }
+        *,*::before,*::after{box-sizing:border-box;}
+        html,body{background:var(--color-bg);margin:0;}
+        body{font-family:'DM Sans',system-ui,sans-serif;color:var(--color-text);overflow:hidden;height:100vh;width:100vw;}
+        .deck{width:100vw;height:100vh;position:relative;}
+        .slide{position:absolute;top:0;left:0;width:100%;height:100%;background:var(--color-bg);display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transform:scale(0.95);transition:opacity 0.7s ease,transform 0.7s ease;pointer-events:none;overflow:hidden;}
+        .slide.active{opacity:1;transform:scale(1);pointer-events:all;}
+        .slide>.content{position:relative;z-index:2;width:100%;max-width:1100px;padding:clamp(1.2rem,3vw,3rem);}
+        .nav-controls{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:14px;z-index:100;background:rgba(255,255,255,0.05);backdrop-filter:blur(10px);padding:8px 22px;border-radius:40px;border:1px solid rgba(255,255,255,0.09);}
+        .nav-btn{width:36px;height:36px;border:none;background:rgba(255,255,255,0.05);color:#3B82F6;border-radius:50%;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.3s;}
+        .nav-btn:hover{background:rgba(59,130,246,0.15);}
+        .slide-dots{display:flex;gap:7px;}
+        .slide-dots .dot{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,0.18);cursor:pointer;transition:background 0.3s,transform 0.3s;}
+        .slide-dots .dot.active{background:#3B82F6;transform:scale(1.3);}
+        .slide-counter{font-size:0.75rem;color:#94a3b8;min-width:36px;text-align:center;}
+        .reveal{opacity:0;transform:translateY(20px);}
+        .text-glow{text-shadow:0 0 20px rgba(59,130,246,0.5),0 0 40px rgba(59,130,246,0.2);}
+        @keyframes float-slow{0%{transform:translate(0,0) scale(1);}25%{transform:translate(60px,-50px) scale(1.12);}50%{transform:translate(-40px,40px) scale(0.9);}75%{transform:translate(50px,20px) scale(1.08);}100%{transform:translate(0,0) scale(1);}}
+        @keyframes float-drift{0%{transform:translate(0,0) scale(1) rotate(0deg);}33%{transform:translate(-50px,-60px) scale(1.15) rotate(3deg);}66%{transform:translate(40px,30px) scale(0.88) rotate(-2deg);}100%{transform:translate(0,0) scale(1) rotate(0deg);}}
+        @keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-15px);}}
+        .gradient-mesh{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;}
+        .blob{position:absolute;border-radius:50%;filter:blur(80px);animation:float-slow 10s ease-in-out infinite;}
+        .blob:nth-child(2){animation:float-drift 14s ease-in-out infinite;}
+        .blob:nth-child(3){animation:float-slow 18s ease-in-out infinite reverse;}
+        .slide::before{content:\'\';position:absolute;inset:0;z-index:1;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg viewBox=\'0 0 512 512\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.7\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)\' opacity=\'0.04\'/%3E%3C/svg%3E");background-repeat:repeat;background-size:256px 256px;opacity:0.03;mix-blend-mode:overlay;}
+        .slide::after{content:\'\';position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,0.45) 100%);}
+        .section-tag{display:inline-flex;align-items:center;gap:6px;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);color:#60A5FA;padding:4px 14px;border-radius:20px;font-size:0.72rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:1rem;}
+        .coverage-table{width:100%;border-collapse:collapse;}
+        .coverage-table th{background:rgba(59,130,246,0.2);color:#93C5FD;font-size:0.72rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;padding:8px 10px;text-align:left;border-bottom:1px solid rgba(59,130,246,0.3);}
+        .coverage-table td{padding:7px 10px;font-size:0.73rem;color:#cbd5e1;border-bottom:1px solid rgba(255,255,255,0.05);vertical-align:middle;}
+        .coverage-table tr:hover td{background:rgba(59,130,246,0.06);}
+        .coverage-table td.media{font-weight:600;color:#f1f5f9;}
+        .coverage-table td.tier1{color:#60A5FA;font-weight:700;}
+        .badge-tier1{display:inline-block;background:rgba(59,130,246,0.25);color:#93C5FD;font-size:0.6rem;font-weight:700;padding:1px 7px;border-radius:8px;margin-left:5px;vertical-align:middle;}
+        .badge-kigo{display:inline-block;background:rgba(16,185,129,0.2);color:#34D399;font-size:0.6rem;font-weight:700;padding:1px 7px;border-radius:8px;margin-left:5px;vertical-align:middle;}
+        .schedule-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:12px;padding:1rem 1.2rem;}
+        .schedule-date{font-size:0.7rem;color:#60A5FA;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;}
+        .schedule-title{font-size:0.95rem;font-weight:600;color:#f1f5f9;margin-bottom:4px;}
+        .schedule-desc{font-size:0.78rem;color:#94a3b8;line-height:1.5;}
+        .kigo-img-box{background:rgba(255,255,255,0.04);border:1px dashed rgba(255,255,255,0.15);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;color:#64748b;font-size:0.75rem;}
+        .step-bar{display:flex;align-items:center;gap:0;}
+        .step-node{background:rgba(59,130,246,0.2);border:1px solid rgba(59,130,246,0.5);border-radius:8px;padding:8px 14px;font-size:0.8rem;color:#93C5FD;font-weight:600;white-space:nowrap;}
+        .step-arrow{color:#3B82F6;font-size:1rem;padding:0 6px;}
+        @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:0.01ms!important;transition-duration:0.2s!important;}}
+    </style>
+</head>
+<body>
+<div class="mouse-spotlight" style="position:fixed;inset:0;z-index:99;pointer-events:none;"></div>
+<div class="deck">
+
+<!-- SLIDE 1: TITLE -->
+<div class="slide active" data-slide="1">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:500px;height:500px;top:-100px;right:-100px;background:#3B82F6;opacity:0.13;"></div>
+        <div class="blob" style="width:300px;height:300px;bottom:-80px;left:-60px;background:#60A5FA;opacity:0.10;"></div>
+        <div class="blob" style="width:200px;height:200px;top:40%;left:15%;background:#93C5FD;opacity:0.08;"></div>
+    </div>
+    <canvas class="particle-canvas" style="position:absolute;inset:0;z-index:1;"></canvas>
+    <div class="content text-center">
+        <div class="reveal" style="font-size:2.2rem;margin-bottom:1rem;">🚀</div>
+        <div class="section-tag reveal" style="justify-content:center;margin-bottom:0.8rem;">UNTYPED × DeliverBird Korea</div>
+        <h1 class="reveal" style="font-family:'Instrument Serif',serif;font-size:clamp(2rem,5vw,3.8rem);font-weight:700;background:linear-gradient(135deg,#3B82F6,#60A5FA,#93C5FD);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2;margin-bottom:0.8rem;">7월 월간 미팅 및 8월 계획</h1>
+        <p class="reveal" style="font-size:1rem;color:#94a3b8;letter-spacing:0.12em;text-transform:uppercase;">2026년 7월 · DeliverBird Korea PR Report</p>
+        <div class="reveal" style="margin-top:1.5rem;display:flex;justify-content:center;gap:1.5rem;flex-wrap:wrap;">
+            <div style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.25);border-radius:10px;padding:10px 20px;font-size:0.82rem;color:#93C5FD;">① 6월 PR 커버리지</div>
+            <div style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.25);border-radius:10px;padding:10px 20px;font-size:0.82rem;color:#93C5FD;">② 7월 PR 일정</div>
+            <div style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.25);border-radius:10px;padding:10px 20px;font-size:0.82rem;color:#93C5FD;">③ 물류센터 확장이전 홍보계획</div>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 2: SECTION DIVIDER - 6월 PR 커버리지 -->
+<div class="slide" data-slide="2">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:450px;height:450px;top:-80px;right:-80px;background:#3B82F6;opacity:0.13;"></div>
+        <div class="blob" style="width:280px;height:280px;bottom:-60px;left:-50px;background:#60A5FA;opacity:0.10;"></div>
+    </div>
+    <canvas class="particle-canvas-ambient" style="position:absolute;inset:0;z-index:1;"></canvas>
+    <div class="content text-center">
+        <div class="reveal" style="font-size:3rem;margin-bottom:1rem;">📰</div>
+        <div class="section-tag reveal" style="justify-content:center;">Section 01</div>
+        <h2 class="reveal" style="font-family:'Instrument Serif',serif;font-size:clamp(2rem,4.5vw,3.4rem);font-weight:700;color:#f1f5f9;margin-bottom:0.8rem;">6월 PR 커버리지</h2>
+        <p class="reveal" style="font-size:1rem;color:#94a3b8;">2026년 6월 언론 보도 성과</p>
+        <div class="reveal" style="margin-top:1.2rem;display:flex;justify-content:center;gap:2rem;flex-wrap:wrap;">
+            <div style="text-align:center;"><div style="font-size:2rem;font-weight:700;color:#3B82F6;" data-count="17">0</div><div style="font-size:0.75rem;color:#94a3b8;margin-top:2px;">총 기사 수</div></div>
+            <div style="text-align:center;"><div style="font-size:2rem;font-weight:700;color:#60A5FA;" data-count="9">0</div><div style="font-size:0.75rem;color:#94a3b8;margin-top:2px;">커버 매체</div></div>
+            <div style="text-align:center;"><div style="font-size:2rem;font-weight:700;color:#93C5FD;" data-count="2">0</div><div style="font-size:0.75rem;color:#94a3b8;margin-top:2px;">기고 게재</div></div>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 3: 6월 특허 보도 커버리지 -->
+<div class="slide" data-slide="3">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:350px;height:350px;top:-60px;right:-60px;background:#3B82F6;opacity:0.09;"></div>
+        <div class="blob" style="width:200px;height:200px;bottom:-40px;left:-30px;background:#93C5FD;opacity:0.07;"></div>
+    </div>
+    <div class="content">
+        <div class="section-tag reveal">6월 22일 · AI 특허 보도자료</div>
+        <h2 class="reveal" style="font-family:'Instrument Serif',serif;font-size:clamp(1.4rem,3vw,2rem);font-weight:700;color:#f1f5f9;margin-bottom:0.3rem;">AI 배송예측·SDK 연동 특허 확보 — 8개 매체 동시 보도</h2>
+        <p class="reveal" style="font-size:0.8rem;color:#60A5FA;margin-bottom:0.8rem;">크로스보더 기술력 강조 · 경제지·전문지·IT 미디어 전방위 커버</p>
+        <div class="reveal">
+        <table class="coverage-table">
+            <thead><tr><th>날짜</th><th>매체</th><th>기자</th><th>기사 제목</th></tr></thead>
+            <tbody>
+                <tr><td>2026.06.22</td><td class="tier1">뉴스핌</td><td>이나영</td><td>딜리버드코리아, AI 배송예측·SDK 연동 특허 확보</td></tr>
+                <tr><td>2026.06.22</td><td class="tier1">한스경제</td><td>김종효</td><td>딜리버드코리아, AI 배송예측·SDK 연동 특허 확보</td></tr>
+                <tr><td>2026.06.22</td><td class="media">데이터넷</td><td>강석오</td><td>딜리버드코리아, 'AI 배송·SDK 연동' 특허 ··· 크로스보더 기술력 강화</td></tr>
+                <tr><td>2026.06.22</td><td class="tier1">디지털투데이</td><td>황치규</td><td>딜리버드코리아, AI 배송 예측·SDK 연동 특허 등록...크로스보더 커머스...</td></tr>
+                <tr><td>2026.06.22</td><td class="media">디지털데일리</td><td>채성오</td><td>딜리버드코리아, AI 배송 예측·SDK 연동 특허 등록</td></tr>
+                <tr><td>2026.06.22</td><td class="tier1">전자신문</td><td>현대인</td><td>딜리버드코리아, AI 배송 예측·SDK 연동 특허 등록</td></tr>
+                <tr><td>2026.06.22</td><td class="media">물류신문</td><td>석한글</td><td>딜리버드코리아, AI가 배송비·도착일 미리 알려준다…'특허 2건 등록'</td></tr>
+                <tr><td>2026.06.22</td><td class="tier1">서울경제</td><td>박우인</td><td>딜리버드코리아, AI 배송 예측 특허…"중소 셀러 해외 진출 지원"</td></tr>
+            </tbody>
+        </table>
+        </div>
+        <div class="reveal" style="margin-top:0.7rem;display:flex;gap:1rem;flex-wrap:wrap;">
+            <div style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.25);border-radius:8px;padding:6px 14px;font-size:0.75rem;color:#60A5FA;">🏆 서울경제·전자신문·디지털투데이 등 Tier1 4개 매체 포함</div>
+            <div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);border-radius:8px;padding:6px 14px;font-size:0.75rem;color:#34D399;">✅ 단일 보도자료로 8개 매체 동시 게재</div>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 4: 6월 추가 보도 + 매일경제 인터뷰 -->
+<div class="slide" data-slide="4">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:350px;height:350px;top:-60px;right:-60px;background:#3B82F6;opacity:0.09;"></div>
+        <div class="blob" style="width:200px;height:200px;bottom:-40px;left:-30px;background:#93C5FD;opacity:0.07;"></div>
+    </div>
+    <div class="content">
+        <div class="section-tag reveal">6월 추가 커버리지</div>
+        <h2 class="reveal" style="font-family:'Instrument Serif',serif;font-size:clamp(1.3rem,2.8vw,1.9rem);font-weight:700;color:#f1f5f9;margin-bottom:1rem;">매일경제 인터뷰 · 부산 스타기업 선정</h2>
+        <div class="reveal" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);border-radius:12px;padding:1rem 1.2rem;border-left:3px solid #3B82F6;">
+                <div style="font-size:0.68rem;color:#60A5FA;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">2026.06.11 · 매일경제 <span style="background:rgba(59,130,246,0.3);padding:1px 7px;border-radius:8px;margin-left:4px;">Tier 1 인터뷰</span></div>
+                <div style="font-size:0.95rem;font-weight:600;color:#f1f5f9;margin-bottom:6px;">해외 역직구 인기에 배송비 최대 70% 낮췄죠</div>
+                <div style="font-size:0.78rem;color:#94a3b8;line-height:1.5;">기자: 이호준 · 창업 스토리 & AI 쇼핑 에이전트 전략 심층 인터뷰 · 국내 역직구 전문 기업으로 포지셔닝 강화</div>
+            </div>
+            <div style="background:rgba(251,191,36,0.07);border:1px solid rgba(251,191,36,0.2);border-radius:12px;padding:1rem 1.2rem;border-left:3px solid #FBBF24;">
+                <div style="font-size:0.68rem;color:#FBBF24;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">2026.06.25 · 부산시·부산관광공사</div>
+                <div style="font-size:0.95rem;font-weight:600;color:#f1f5f9;margin-bottom:6px;">글로벌 관광 이끌 스타기업 5개사 발표</div>
+                <div style="font-size:0.78rem;color:#94a3b8;line-height:1.5;">부산시·부산관광공사 공식 선정 · 글로벌 관광 연계 스타기업 5개사 중 딜리버드코리아 포함 · 대관 협력 기반 확보</div>
+            </div>
+        </div>
+        <div class="reveal" style="margin-top:0.8rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:0.8rem 1rem;">
+            <div style="font-size:0.75rem;color:#60A5FA;font-weight:600;margin-bottom:4px;">6월 지디넷코리아 기고 · 2026.06.02</div>
+            <div style="font-size:0.88rem;font-weight:600;color:#f1f5f9;margin-bottom:4px;">AI 쇼핑 에이전트가 여는 크로스보더 이커머스의 새로운 운영 스택 <span class="badge-kigo">기고</span></div>
+            <div style="font-size:0.76rem;color:#94a3b8;">기고문 상세 내용은 다음 슬라이드에서 소개합니다</div>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 5: 기고 ① 지디넷코리아 -->
+<div class="slide" data-slide="5">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:350px;height:350px;top:-60px;right:-60px;background:#10B981;opacity:0.09;"></div>
+        <div class="blob" style="width:200px;height:200px;bottom:-40px;left:-30px;background:#3B82F6;opacity:0.07;"></div>
+    </div>
+    <div class="content">
+        <div class="section-tag reveal" style="background:rgba(16,185,129,0.15);border-color:rgba(16,185,129,0.35);color:#34D399;">기고 ① · 지디넷코리아 · 2026.06.02</div>
+        <h2 class="reveal" style="font-family:'Instrument Serif',serif;font-size:clamp(1.2rem,2.5vw,1.7rem);font-weight:700;color:#f1f5f9;margin-bottom:0.8rem;">AI 쇼핑 에이전트가 여는 크로스보더 이커머스의 새로운 운영 스택</h2>
+        <div class="reveal" style="display:grid;grid-template-columns:1.4fr 1fr;gap:1.2rem;align-items:start;">
+            <div>
+                <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:10px;padding:1rem 1.2rem;margin-bottom:0.8rem;">
+                    <div style="font-size:0.72rem;color:#34D399;font-weight:600;margin-bottom:6px;">기고 개요</div>
+                    <div style="font-size:0.82rem;color:#cbd5e1;line-height:1.6;">AI 쇼핑 에이전트 시대의 도래와 크로스보더 이커머스의 구조적 변화를 데이터 기반으로 분석한 심층 기고. 딜리버드코리아의 기술 철학과 서비스 방향성을 전문가 시각으로 전달.</div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                    <div style="display:flex;align-items:center;gap:8px;font-size:0.78rem;color:#cbd5e1;"><span style="color:#34D399;">✓</span> 매체: 지디넷코리아 (IT/테크 전문 미디어)</div>
+                    <div style="display:flex;align-items:center;gap:8px;font-size:0.78rem;color:#cbd5e1;"><span style="color:#34D399;">✓</span> AI 쇼핑 에이전트 기업 포지셔닝 메시지 전달</div>
+                    <div style="display:flex;align-items:center;gap:8px;font-size:0.78rem;color:#cbd5e1;"><span style="color:#34D399;">✓</span> 크로스보더 이커머스 전문성·기술력 강조</div>
+                </div>
+            </div>
+            <div class="kigo-img-box" style="height:200px;border-radius:12px;">
+                <div style="font-size:1.5rem;">🖼️</div>
+                <div style="text-align:center;padding:0 1rem;">기고 캡처 이미지<br>삽입 예정</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 6: 7월 보도 커버리지 -->
+<div class="slide" data-slide="6">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:350px;height:350px;top:-60px;right:-60px;background:#3B82F6;opacity:0.09;"></div>
+        <div class="blob" style="width:200px;height:200px;bottom:-40px;left:-30px;background:#93C5FD;opacity:0.07;"></div>
+    </div>
+    <div class="content">
+        <div class="section-tag reveal">7월 13일 · BTS 콘서트·BOF K-쇼핑 팝업</div>
+        <h2 class="reveal" style="font-family:'Instrument Serif',serif;font-size:clamp(1.3rem,2.8vw,1.9rem);font-weight:700;color:#f1f5f9;margin-bottom:0.8rem;">부산 K-쇼핑 에이전트 체험 행사 — 6개 매체 보도</h2>
+        <div class="reveal">
+        <table class="coverage-table">
+            <thead><tr><th>날짜</th><th>매체</th><th>기자</th><th>기사 제목</th></tr></thead>
+            <tbody>
+                <tr><td>2026.07.13</td><td class="tier1">이데일리</td><td>김정유</td><td>딜리버드코리아, 외국인에 'K쇼핑' 전파…오프 행사 개최</td></tr>
+                <tr><td>2026.07.13</td><td class="tier1">지디넷코리아</td><td>안희정</td><td>딜리버드코리아, BTS 콘서트·BOF서 'K-쇼핑 에이전트' 체험 행사</td></tr>
+                <tr><td>2026.07.13</td><td class="media">한스경제</td><td>김종효</td><td>딜리버드코리아, 부산서 K-쇼핑 팝업스토어 운영</td></tr>
+                <tr><td>2026.07.13</td><td class="tier1">전자신문</td><td>현대인</td><td>딜리버드코리아, BTS 콘서트·BOF서 '쇼핑 에이전트' 행사 개최</td></tr>
+                <tr><td>2026.07.13</td><td class="media">물류신문</td><td>석한글</td><td>딜리버드코리아, 공연장서 역직구 전 과정 체험…글로벌 고객 공략</td></tr>
+            </tbody>
+        </table>
+        </div>
+        <div class="reveal" style="margin-top:0.6rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:0.7rem 1rem;">
+            <div style="font-size:0.75rem;color:#60A5FA;font-weight:600;margin-bottom:4px;">전자신문 기고 · 2026.07.12</div>
+            <div style="font-size:0.85rem;font-weight:600;color:#f1f5f9;">[ET단상] K컬처가 만든 역직구 시장, AI가 다음 챕터를 쓰다 <span class="badge-kigo">기고</span></div>
+            <div style="font-size:0.75rem;color:#94a3b8;margin-top:3px;">기고문 상세는 다음 슬라이드 참고</div>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 7: 기고 ② 전자신문 ET단상 -->
+<div class="slide" data-slide="7">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:350px;height:350px;top:-60px;right:-60px;background:#10B981;opacity:0.09;"></div>
+        <div class="blob" style="width:200px;height:200px;bottom:-40px;left:-30px;background:#3B82F6;opacity:0.07;"></div>
+    </div>
+    <div class="content">
+        <div class="section-tag reveal" style="background:rgba(16,185,129,0.15);border-color:rgba(16,185,129,0.35);color:#34D399;">기고 ② · 전자신문 ET단상 · 2026.07.12</div>
+        <h2 class="reveal" style="font-family:'Instrument Serif',serif;font-size:clamp(1.2rem,2.5vw,1.7rem);font-weight:700;color:#f1f5f9;margin-bottom:0.8rem;">[ET단상] K컬처가 만든 역직구 시장, AI가 다음 챕터를 쓰다</h2>
+        <div class="reveal" style="display:grid;grid-template-columns:1.4fr 1fr;gap:1.2rem;align-items:start;">
+            <div>
+                <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:10px;padding:1rem 1.2rem;margin-bottom:0.8rem;">
+                    <div style="font-size:0.72rem;color:#34D399;font-weight:600;margin-bottom:6px;">기고 개요</div>
+                    <div style="font-size:0.82rem;color:#cbd5e1;line-height:1.6;">K컬처(BTS·BOF 등)가 만들어낸 역직구 시장의 폭발적 성장과, AI가 그 다음 단계를 어떻게 재정의할 것인지를 전략적 시각으로 기술. 전자신문 ET단상 고정 칼럼으로 업계 전문가 이미지 확립.</div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                    <div style="display:flex;align-items:center;gap:8px;font-size:0.78rem;color:#cbd5e1;"><span style="color:#34D399;">✓</span> 매체: 전자신문 (IT 업계 최고 권위 Tier1 미디어)</div>
+                    <div style="display:flex;align-items:center;gap:8px;font-size:0.78rem;color:#cbd5e1;"><span style="color:#34D399;">✓</span> ET단상 칼럼 — 업계 오피니언 리더로 포지셔닝</div>
+                    <div style="display:flex;align-items:center;gap:8px;font-size:0.78rem;color:#cbd5e1;"><span style="color:#34D399;">✓</span> K컬처 × AI × 역직구 3각 연결로 브랜드 스토리 강화</div>
+                </div>
+            </div>
+            <div class="kigo-img-box" style="height:200px;border-radius:12px;">
+                <div style="font-size:1.5rem;">🖼️</div>
+                <div style="text-align:center;padding:0 1rem;">기고 캡처 이미지<br>삽입 예정</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 8: SECTION DIVIDER - 7월 PR 일정 -->
+<div class="slide" data-slide="8">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:450px;height:450px;top:-80px;right:-80px;background:#F59E0B;opacity:0.10;"></div>
+        <div class="blob" style="width:280px;height:280px;bottom:-60px;left:-50px;background:#3B82F6;opacity:0.09;"></div>
+    </div>
+    <canvas class="particle-canvas-ambient" style="position:absolute;inset:0;z-index:1;"></canvas>
+    <div class="content text-center">
+        <div class="reveal" style="font-size:3rem;margin-bottom:1rem;">📅</div>
+        <div class="section-tag reveal" style="justify-content:center;background:rgba(245,158,11,0.15);border-color:rgba(245,158,11,0.35);color:#FCD34D;">Section 02</div>
+        <h2 class="reveal" style="font-family:'Instrument Serif',serif;font-size:clamp(2rem,4.5vw,3.4rem);font-weight:700;color:#f1f5f9;margin-bottom:0.6rem;">7월 PR 일정</h2>
+        <p class="reveal" style="font-size:1rem;color:#94a3b8;">물류센터 이전 · FedEx Express MOU</p>
+    </div>
+</div>
+
+<!-- SLIDE 9: 7월 PR 일정 상세 -->
+<div class="slide" data-slide="9">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:350px;height:350px;top:-60px;right:-60px;background:#F59E0B;opacity:0.08;"></div>
+        <div class="blob" style="width:200px;height:200px;bottom:-40px;left:-30px;background:#3B82F6;opacity:0.07;"></div>
+    </div>
+    <div class="content">
+        <div class="section-tag reveal" style="background:rgba(245,158,11,0.15);border-color:rgba(245,158,11,0.35);color:#FCD34D;">7월 PR 핵심 일정</div>
+        <h2 class="reveal" style="font-family:'Instrument Serif',serif;font-size:clamp(1.3rem,2.8vw,2rem);font-weight:700;color:#f1f5f9;margin-bottom:1rem;">2대 핵심 이슈 · 하반기 성장 스토리 전환점</h2>
+        <div class="reveal" style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;">
+            <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);border-radius:14px;padding:1.2rem 1.4rem;border-top:3px solid #3B82F6;">
+                <div style="font-size:0.68rem;color:#60A5FA;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">① 7월 중하순</div>
+                <div style="font-size:1.1rem;font-weight:700;color:#f1f5f9;margin-bottom:6px;">🏭 물류센터 이전·확장</div>
+                <div style="font-size:0.8rem;color:#94a3b8;line-height:1.6;margin-bottom:10px;">부산항 기반 해상특송·역직구·리커머스 실전 인프라 구축. 센터 준공 보도자료 배포 예정.</div>
+                <div style="display:flex;flex-direction:column;gap:5px;">
+                    <div style="font-size:0.75rem;color:#93C5FD;">📌 보도자료 배포: 물류신문·부산일보·뉴시스·뉴스1 등</div>
+                    <div style="font-size:0.75rem;color:#93C5FD;">📌 메시지: 부산항 기반 해상특송·역직구 현장 공개</div>
+                </div>
+            </div>
+            <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:14px;padding:1.2rem 1.4rem;border-top:3px solid #F59E0B;">
+                <div style="font-size:0.68rem;color:#FCD34D;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">② 7월 28일 (예정)</div>
+                <div style="font-size:1.1rem;font-weight:700;color:#f1f5f9;margin-bottom:6px;">✈️ FedEx Express MOU 체결</div>
+                <div style="font-size:0.8rem;color:#94a3b8;line-height:1.6;margin-bottom:10px;">글로벌 물류 파트너십 강화. 배송 인프라의 국제적 신뢰도 제고 및 크로스보더 역량 공식화.</div>
+                <div style="display:flex;flex-direction:column;gap:5px;">
+                    <div style="font-size:0.75rem;color:#FCD34D;">📌 MOU 체결 보도자료 배포 예정</div>
+                    <div style="font-size:0.75rem;color:#FCD34D;">📌 타겟: 물류·경제·IT 주요 매체 전방위 배포</div>
+                </div>
+            </div>
+        </div>
+        <div class="reveal" style="margin-top:0.9rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:0.75rem 1rem;font-size:0.78rem;color:#94a3b8;">
+            💡 두 이슈가 연속 배포될 경우 <span style="color:#60A5FA;font-weight:600;">7월 말 집중 커버리지 확보</span> 가능 — 물류 인프라 확장 + 글로벌 파트너십이라는 이중 메시지로 AI 쇼핑 에이전트 포지셔닝 강화
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 10: SECTION DIVIDER - 물류센터 홍보계획 -->
+<div class="slide" data-slide="10">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:450px;height:450px;top:-80px;right:-80px;background:#10B981;opacity:0.10;"></div>
+        <div class="blob" style="width:280px;height:280px;bottom:-60px;left:-50px;background:#3B82F6;opacity:0.09;"></div>
+    </div>
+    <canvas class="particle-canvas-ambient" style="position:absolute;inset:0;z-index:1;"></canvas>
+    <div class="content text-center">
+        <div class="reveal" style="font-size:3rem;margin-bottom:1rem;">🏗️</div>
+        <div class="section-tag reveal" style="justify-content:center;background:rgba(16,185,129,0.15);border-color:rgba(16,185,129,0.35);color:#34D399;">Section 03</div>
+        <h2 class="reveal" style="font-family:'Instrument Serif',serif;font-size:clamp(1.8rem,4vw,3rem);font-weight:700;color:#f1f5f9;margin-bottom:0.6rem;">물류센터 확장이전 홍보계획</h2>
+        <p class="reveal" style="font-size:1rem;color:#94a3b8;line-height:1.6;">부산항 기반 해상특송·역직구·리커머스 실전 인프라 기업으로<br>딜리버드코리아의 대관 협력 기반을 중장기 확보</p>
+    </div>
+</div>
+
+<!-- SLIDE 11: 물류센터 홍보 개요 & 목표 -->
+<div class="slide" data-slide="11">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:350px;height:350px;top:-60px;right:-60px;background:#10B981;opacity:0.09;"></div>
+        <div class="blob" style="width:200px;height:200px;bottom:-40px;left:-30px;background:#3B82F6;opacity:0.07;"></div>
+    </div>
+    <div class="content">
+        <div class="section-tag reveal" style="background:rgba(16,185,129,0.15);border-color:rgba(16,185,129,0.35);color:#34D399;">홍보 개요 & 목표</div>
+        <h2 class="reveal" style="font-family:'Instrument Serif',serif;font-size:clamp(1.3rem,2.8vw,2rem);font-weight:700;color:#f1f5f9;margin-bottom:1rem;">물류센터 이전을 통한 기업 공신력·정책 적합성 제고</h2>
+        <div class="reveal" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:0.8rem;">
+            <div style="background:rgba(16,185,129,0.07);border:1px solid rgba(16,185,129,0.2);border-radius:12px;padding:1rem;">
+                <div style="font-size:0.7rem;color:#34D399;font-weight:600;margin-bottom:6px;">📌 홍보 핵심 메시지</div>
+                <div style="font-size:0.82rem;color:#cbd5e1;line-height:1.6;">딜리버드코리아 = 부산항 기반 해상특송·역직구·리커머스를 연결하는 <span style="color:#34D399;font-weight:600;">실전 인프라 기업</span></div>
+            </div>
+            <div style="background:rgba(59,130,246,0.07);border:1px solid rgba(59,130,246,0.2);border-radius:12px;padding:1rem;">
+                <div style="font-size:0.7rem;color:#60A5FA;font-weight:600;margin-bottom:6px;">🎯 홍보 목표</div>
+                <div style="font-size:0.82rem;color:#cbd5e1;line-height:1.6;">부산시·유관기관에 <span style="color:#60A5FA;font-weight:600;">정책 연계 가능한 민간 실행 파트너</span>로 인식시키고 한·일 세관 교류 통해 신뢰도 제고</div>
+            </div>
+        </div>
+        <div class="reveal" style="display:flex;flex-direction:column;gap:6px;">
+            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:8px 12px;font-size:0.8rem;color:#cbd5e1;display:flex;gap:10px;align-items:center;">
+                <span style="color:#34D399;font-size:1rem;flex-shrink:0;">✓</span>부산시·부산본부세관·부산항만공사와 해상특송 활성화 흐름과 접점 구성
+            </div>
+            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:8px 12px;font-size:0.8rem;color:#cbd5e1;display:flex;gap:10px;align-items:center;">
+                <span style="color:#34D399;font-size:1rem;flex-shrink:0;">✓</span>한·일 통관 및 세관 협력 가능성 사업 맥락 강조 → 글로벌 전자상거래 허브 포지셔닝
+            </div>
+            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:8px 12px;font-size:0.8rem;color:#cbd5e1;display:flex;gap:10px;align-items:center;">
+                <span style="color:#34D399;font-size:1rem;flex-shrink:0;">✓</span>센터 오픈 현장 브리핑 또는 기자 팸투어 형태로 미디어 직접 대면 기회 마련
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 12: 물류센터 홍보 추진 일정 -->
+<div class="slide" data-slide="12">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:350px;height:350px;top:-60px;right:-60px;background:#10B981;opacity:0.09;"></div>
+        <div class="blob" style="width:200px;height:200px;bottom:-40px;left:-30px;background:#3B82F6;opacity:0.07;"></div>
+    </div>
+    <div class="content">
+        <div class="section-tag reveal" style="background:rgba(16,185,129,0.15);border-color:rgba(16,185,129,0.35);color:#34D399;">홍보 추진 일정</div>
+        <h2 class="reveal" style="font-family:'Instrument Serif',serif;font-size:clamp(1.3rem,2.8vw,2rem);font-weight:700;color:#f1f5f9;margin-bottom:0.9rem;">세관 교류 이벤트부터 센터 오픈까지 — 연속성 있는 아젠다 운영</h2>
+        <div class="reveal" style="display:flex;flex-direction:column;gap:0.7rem;">
+            <div style="display:grid;grid-template-columns:130px 1fr;gap:12px;align-items:start;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:12px;padding:0.9rem 1rem;border-left:3px solid #10B981;">
+                <div>
+                    <div style="font-size:0.72rem;color:#34D399;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;">7월</div>
+                    <div style="font-size:0.7rem;color:#64748b;margin-top:2px;">현재 진행 중</div>
+                </div>
+                <div>
+                    <div style="font-size:0.88rem;font-weight:600;color:#f1f5f9;margin-bottom:4px;">언론 태핑 — 인터뷰 가능 여부 확인</div>
+                    <div style="font-size:0.77rem;color:#94a3b8;">부산일보, 물류신문, 뉴시스, 뉴스1 담당 기자 연락 개시 · 해상특송 아젠다 관련 인터뷰 의향 타진</div>
+                </div>
+            </div>
+            <div style="display:grid;grid-template-columns:130px 1fr;gap:12px;align-items:start;background:rgba(59,130,246,0.07);border:1px solid rgba(59,130,246,0.2);border-radius:12px;padding:0.9rem 1rem;border-left:3px solid #3B82F6;">
+                <div>
+                    <div style="font-size:0.72rem;color:#60A5FA;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;">7월 중하순</div>
+                    <div style="font-size:0.7rem;color:#64748b;margin-top:2px;">이달 내 배포</div>
+                </div>
+                <div>
+                    <div style="font-size:0.88rem;font-weight:600;color:#f1f5f9;margin-bottom:4px;">센터 준공 보도자료 공식 배포</div>
+                    <div style="font-size:0.77rem;color:#94a3b8;">메시지: '부산항 기반 해상특송·역직구 현장' 공개 · 부산시·유관기관 협업 가능성 담은 방향으로 설계 · 물류·경제·IT 전방위 배포</div>
+                </div>
+            </div>
+            <div style="display:grid;grid-template-columns:130px 1fr;gap:12px;align-items:start;background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.2);border-radius:12px;padding:0.9rem 1rem;border-left:3px solid #F59E0B;">
+                <div>
+                    <div style="font-size:0.72rem;color:#FCD34D;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;">8월</div>
+                    <div style="font-size:0.7rem;color:#64748b;margin-top:2px;">후속 행동</div>
+                </div>
+                <div>
+                    <div style="font-size:0.88rem;font-weight:600;color:#f1f5f9;margin-bottom:4px;">소규모 현장 브리핑 진행</div>
+                    <div style="font-size:0.77rem;color:#94a3b8;">리커머스 협회가 부산시 대동 행사 진행 시 연계 변형 배포 · 현장 팸투어 또는 기자 초청 브리핑으로 미디어 실사 기회 제공</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 13: CLOSING -->
+<div class="slide" data-slide="13">
+    <div class="gradient-mesh">
+        <div class="blob" style="width:500px;height:500px;top:-100px;right:-100px;background:#3B82F6;opacity:0.13;"></div>
+        <div class="blob" style="width:300px;height:300px;bottom:-80px;left:-60px;background:#10B981;opacity:0.10;"></div>
+        <div class="blob" style="width:200px;height:200px;top:40%;left:15%;background:#93C5FD;opacity:0.08;"></div>
+    </div>
+    <canvas class="particle-canvas" style="position:absolute;inset:0;z-index:1;"></canvas>
+    <div class="content text-center">
+        <div class="reveal" style="font-size:2rem;margin-bottom:0.8rem;">🎯</div>
+        <h2 class="reveal" style="font-family:'Instrument Serif',serif;font-size:clamp(1.8rem,4vw,3rem);font-weight:700;background:linear-gradient(135deg,#3B82F6,#60A5FA,#93C5FD);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:0.6rem;">8월 주요 계획 요약</h2>
+        <div class="reveal" style="display:flex;justify-content:center;gap:1rem;flex-wrap:wrap;margin-top:1rem;">
+            <div style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);border-radius:12px;padding:0.9rem 1.2rem;text-align:left;min-width:220px;max-width:240px;">
+                <div style="font-size:1.2rem;margin-bottom:6px;">🏭</div>
+                <div style="font-size:0.82rem;font-weight:600;color:#f1f5f9;margin-bottom:4px;">물류센터 현장 브리핑</div>
+                <div style="font-size:0.74rem;color:#94a3b8;">소규모 기자 초청 · 부산 현장 실사 · 리커머스 협회 연계</div>
+            </div>
+            <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:12px;padding:0.9rem 1.2rem;text-align:left;min-width:220px;max-width:240px;">
+                <div style="font-size:1.2rem;margin-bottom:6px;">✈️</div>
+                <div style="font-size:0.82rem;font-weight:600;color:#f1f5f9;margin-bottom:4px;">FedEx MOU 후속 보도</div>
+                <div style="font-size:0.74rem;color:#94a3b8;">MOU 체결 보도 후속 피처 기사 기획 · 글로벌 파트너십 메시지 지속</div>
+            </div>
+            <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:12px;padding:0.9rem 1.2rem;text-align:left;min-width:220px;max-width:240px;">
+                <div style="font-size:1.2rem;margin-bottom:6px;">📊</div>
+                <div style="font-size:0.82rem;font-weight:600;color:#f1f5f9;margin-bottom:4px;">상반기 역직구 데이터 보도자료</div>
+                <div style="font-size:0.74rem;color:#94a3b8;">2026 상반기 역직구 데이터 인사이트 공개 · 국가별 트렌드 분석</div>
+            </div>
+        </div>
+        <div class="reveal" style="margin-top:1.2rem;font-size:0.78rem;color:#64748b;">UNTYPED Co., Ltd. · lisa@untyped.co.kr · 010-6505-9828</div>
+    </div>
+</div>
+
+</div>
+
+<div class="nav-controls">
+    <button class="nav-btn" onclick="changeSlide(-1)">&#8249;</button>
+    <div class="slide-dots" id="dots"></div>
+    <button class="nav-btn" onclick="changeSlide(1)">&#8250;</button>
+    <span class="slide-counter" id="counter">1 / 13</span>
+</div>
+
+<script>
+    let current=1;
+    const total=document.querySelectorAll('.slide').length;
+    const dotsC=document.getElementById('dots');
+    const counter=document.getElementById('counter');
+    for(let i=1;i<=total;i++){const d=document.createElement('div');d.className='dot'+(i===1?' active':'');d.onclick=()=>goToSlide(i);dotsC.appendChild(d);}
+    function goToSlide(n){
+        const prev=document.querySelector('.slide.active');
+        const next=document.querySelector('.slide[data-slide="'+n+'"]');
+        if(prev)prev.classList.remove('active');
+        if(next){next.classList.add('active');animateSlide(next);}
+        current=n;updateNav();
+    }
+    function changeSlide(dir){let n=current+dir;if(n<1)n=total;if(n>total)n=1;goToSlide(n);}
+    function updateNav(){document.querySelectorAll('.dot').forEach((d,i)=>{d.classList.toggle('active',i+1===current);});counter.textContent=current+' / '+total;}
+    document.addEventListener('keydown',(e)=>{if(e.key==='ArrowRight'||e.key===' '){e.preventDefault();changeSlide(1);}if(e.key==='ArrowLeft'){e.preventDefault();changeSlide(-1);}});
+    let touchX=0;
+    document.addEventListener('touchstart',(e)=>{touchX=e.touches[0].clientX;});
+    document.addEventListener('touchend',(e)=>{const diff=touchX-e.changedTouches[0].clientX;if(Math.abs(diff)>50)changeSlide(diff>0?1:-1);});
+    function animateSlide(slide){
+        slide.querySelectorAll('.reveal').forEach((el,i)=>{
+            el.style.transition='none';el.style.opacity='0';el.style.transform='translateY(20px)';
+            el.offsetHeight;
+            const delay=i*0.08;
+            el.style.transition='opacity 0.35s ease '+delay+'s, transform 0.35s ease '+delay+'s';
+            el.style.opacity='1';el.style.transform='translateY(0px)';
+        });
+        animateEffects(slide);
+    }
+    function animateEffects(slide){
+        slide.querySelectorAll('[data-count]:not(.counted)').forEach(el=>{
+            el.classList.add('counted');
+            const target=parseInt(el.dataset.count);
+            let cur=0;const step=target/40;
+            const timer=setInterval(()=>{cur+=step;if(cur>=target){cur=target;clearInterval(timer);}el.textContent=Math.round(cur);},30);
+        });
+    }
+    document.addEventListener('mousemove',(e)=>{
+        const s=document.querySelector('.mouse-spotlight');
+        if(s)s.style.background='radial-gradient(600px circle at '+e.clientX+'px '+e.clientY+'px, rgba(59,130,246,0.06), transparent 40%)';
+    });
+    window.initParticles=function(canvas,options){
+        if(!canvas)return;
+        const ctx=canvas.getContext('2d');
+        canvas.width=canvas.offsetWidth;canvas.height=canvas.offsetHeight;
+        const count=options.count||(options.interactive?55:18);
+        let mx=-1000,my=-1000;
+        const particles=Array.from({length:count},()=>({x:Math.random()*canvas.width,y:Math.random()*canvas.height,vx:(Math.random()-0.5)*0.3,vy:(Math.random()-0.5)*0.3,size:Math.random()*2.5+0.8,alpha:Math.random()*0.35+0.1}));
+        if(options.interactive){canvas.addEventListener('mousemove',(e)=>{const r=canvas.getBoundingClientRect();mx=e.clientX-r.left;my=e.clientY-r.top;});canvas.addEventListener('mouseleave',()=>{mx=-1000;my=-1000;});}
+        (function animate(){
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            particles.forEach(p=>{
+                if(options.interactive){const dx=p.x-mx,dy=p.y-my,dist=Math.sqrt(dx*dx+dy*dy);if(dist<120){const force=(120-dist)/120*2;p.vx+=(dx/dist)*force*0.1;p.vy+=(dy/dist)*force*0.1;}}
+                p.vx*=0.98;p.vy*=0.98;p.x+=p.vx;p.y+=p.vy;
+                if(p.x<0)p.x=canvas.width;if(p.x>canvas.width)p.x=0;if(p.y<0)p.y=canvas.height;if(p.y>canvas.height)p.y=0;
+                ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fillStyle='rgba(59,130,246,'+p.alpha+')';ctx.fill();
+            });
+            requestAnimationFrame(animate);
+        })();
+    };
+    document.querySelectorAll('.particle-canvas').forEach(c=>window.initParticles(c,{interactive:true,count:55}));
+    document.querySelectorAll('.particle-canvas-ambient').forEach(c=>window.initParticles(c,{interactive:false,count:18}));
+    try{animateSlide(document.querySelector('.slide.active'));}catch(e){}
+</script>
+</body>
+</html>
