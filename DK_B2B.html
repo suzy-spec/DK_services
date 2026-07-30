@@ -1,0 +1,174 @@
+[b2b_dashboard_v7_merged.html](https://github.com/user-attachments/files/30532599/b2b_dashboard_v7_merged.html)
+<h2 class="sr-only">B2B 비즈니스 대시보드 시안 v7. 콘텐츠 성과와 홈페이지 유입 분석을 각각 한 페이지로 합쳤습니다.</h2>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+
+<div style="display:flex; border:0.5px solid var(--border); border-radius:12px; overflow:hidden; min-height:640px;">
+
+  <div style="width:200px; background:var(--surface-1); border-right:0.5px solid var(--border); padding:12px 0; flex-shrink:0;">
+    <div style="padding:6px 16px; font-size:13px; font-weight:500;">B2B 비즈니스</div>
+    <div style="padding:8px 16px 4px; font-size:12px; color:var(--text-muted);">DK Funnel(B2B)</div>
+    <button class="nav" data-target="funnel1" style="all:unset; cursor:pointer; display:block; width:100%; box-sizing:border-box; padding:6px 16px 6px 24px; font-size:13px;">골든패스</button>
+    <button class="nav" data-target="funnel2" style="all:unset; cursor:pointer; display:block; width:100%; box-sizing:border-box; padding:6px 16px 6px 24px; font-size:13px;">목적지 경로</button>
+    <button class="nav" data-target="content" style="all:unset; cursor:pointer; display:block; width:100%; box-sizing:border-box; padding:6px 16px; font-size:13px; margin-top:6px;">콘텐츠 성과</button>
+    <button class="nav" data-target="traffic" style="all:unset; cursor:pointer; display:block; width:100%; box-sizing:border-box; padding:6px 16px; font-size:13px;">홈페이지 유입 분석</button>
+  </div>
+
+  <div style="flex:1; padding:18px; min-width:0;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <div id="screen-title" style="font-size:16px; font-weight:500;">골든패스</div>
+      <div style="font-size:13px; color:var(--text-secondary); border:0.5px solid var(--border); border-radius:var(--radius); padding:6px 12px;">2026-07-15 ~ 2026-07-28</div>
+    </div>
+
+    <div class="screen" id="funnel1">
+      <div style="background:#FFF7ED; border:1px solid rgba(249,115,22,0.25); border-radius:12px; padding:12px 14px; margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <div style="font-size:12px; font-weight:500; color:#D85A30; text-transform:uppercase; letter-spacing:0.06em;">B2B 문의 골든 패스</div>
+          <div style="font-size:12px; color:var(--text-secondary);">최종 전환 <strong style="color:#16a34a; font-size:14px;">2.24%</strong> <span style="color:#16a34a; font-size:11px;">▲0.31%p</span></div>
+        </div>
+        <div style="display:flex; gap:0; overflow-x:auto;" id="gp-steps"></div>
+      </div>
+      <div style="font-size:13px; color:var(--text-muted);">동선 흐름도는 전체 화면에서 확인 가능합니다 (이전 시안 참고).</div>
+    </div>
+
+    <div class="screen" id="funnel2" style="display:none;">
+      <div style="display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; align-items:center;">
+        <select id="dest-select" style="font-size:13px;">
+          <option value="email">목적지: 이메일문의</option>
+          <option value="brochure">목적지: 소개서 신청</option>
+        </select>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:10px; margin-bottom:12px;" id="dest-stats"></div>
+      <div style="background:var(--surface-2); border:0.5px solid var(--border); border-radius:12px; padding:14px; margin-bottom:12px;">
+        <div style="font-size:13px; font-weight:500; margin-bottom:10px;">스텝 퍼널</div>
+        <div id="funnel-bars"></div>
+      </div>
+      <div style="background:var(--surface-2); border:0.5px solid var(--border); border-radius:12px; padding:14px;">
+        <div style="font-size:13px; font-weight:500; margin-bottom:10px;">이탈 행선지</div>
+        <div id="exit-bars"></div>
+      </div>
+    </div>
+
+    <div class="screen" id="content" style="display:none;">
+      <div style="font-size:13px; font-weight:500; margin-bottom:8px;">기간별 콘텐츠 조회수</div>
+      <div style="position:relative; height:200px; margin-bottom:14px;"><canvas id="chart-content1"></canvas></div>
+
+      <div style="font-size:13px; font-weight:500; margin:16px 0 8px;">기간별 게시글 현황</div>
+      <table style="width:100%; font-size:13px; border-collapse:collapse; margin-bottom:20px;">
+        <tr style="color:var(--text-secondary); border-bottom:0.5px solid var(--border);"><td style="padding:6px 0;">날짜</td><td>게시글 제목</td><td style="text-align:right;">조회수</td></tr>
+        <tr id="posts-rows"></tr>
+      </table>
+
+      <div style="font-size:13px; font-weight:500; margin-bottom:8px;">인기 콘텐츠 TOP 20</div>
+      <table style="width:100%; font-size:13px; border-collapse:collapse;">
+        <tr style="color:var(--text-secondary); border-bottom:0.5px solid var(--border);"><td style="padding:6px 0; width:50px;">순위</td><td>콘텐츠 제목</td><td style="text-align:right;">조회수</td></tr>
+        <tr id="top20-rows"></tr>
+      </table>
+    </div>
+
+    <div class="screen" id="traffic" style="display:none;">
+      <div style="display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:12px; margin-bottom:16px;">
+        <div style="background:var(--surface-1); border-radius:var(--radius); padding:1rem;"><div style="font-size:13px; color:var(--text-secondary);">총 방문자수</div><div style="font-size:24px; font-weight:500;">28,940</div></div>
+        <div style="background:var(--surface-1); border-radius:var(--radius); padding:1rem;"><div style="font-size:13px; color:var(--text-secondary);">신규 방문자</div><div style="font-size:24px; font-weight:500;">19,120</div></div>
+        <div style="background:var(--surface-1); border-radius:var(--radius); padding:1rem;"><div style="font-size:13px; color:var(--text-secondary);">재방문자</div><div style="font-size:24px; font-weight:500;">9,820</div></div>
+      </div>
+      <div style="position:relative; height:220px; margin-bottom:20px;"><canvas id="chart-traffic1"></canvas></div>
+
+      <div style="font-size:13px; font-weight:500; margin-bottom:8px;">유입 키워드</div>
+      <table style="width:100%; font-size:13px; border-collapse:collapse;">
+        <tr style="color:var(--text-secondary); border-bottom:0.5px solid var(--border);"><td style="padding:6px 0;">순위</td><td>키워드</td><td style="text-align:right;">유입수</td><td style="text-align:right;">전주 대비</td></tr>
+        <tr id="keyword-rows"></tr>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const titles = {funnel1:'골든패스', funnel2:'목적지 경로', content:'콘텐츠 성과', traffic:'홈페이지 유입 분석'};
+const charts = {};
+function ensureChart(id, cfg){ if(charts[id]) return; const ctx=document.getElementById(id); if(!ctx) return; charts[id]=new Chart(ctx, cfg); }
+
+const gpSteps = [
+  {label:'전입', count:'12,480', rate:'100.0%', wow:'▲12.3% vs 직전'},
+  {label:'서비스 소개 조회', count:'4,120', rate:'33.0% 전입 대비', wow:'▲8.1% vs 직전'},
+  {label:'문의/신청 폼 진입', count:'612', rate:'4.9% 전입 대비', wow:'▲15.6% vs 직전'},
+  {label:'이메일문의 완료', count:'184', rate:'1.5% 전입 대비', wow:'▲6.2% vs 직전'},
+  {label:'소개서 신청 완료', count:'96', rate:'0.8% 전입 대비', wow:'▲9.4% vs 직전'}
+];
+document.getElementById('gp-steps').innerHTML = gpSteps.map(s=>`
+  <div style="flex:1 1 0; min-width:110px; padding:6px 10px;">
+    <div style="font-size:11px; color:var(--text-secondary); font-weight:500;">${s.label}</div>
+    <div style="font-size:18px; font-weight:500; margin:2px 0;">${s.count}</div>
+    <div style="font-size:10.5px; color:var(--text-muted);">${s.rate}</div>
+    <div style="font-size:10.5px; color:#16a34a; font-weight:500;">${s.wow}</div>
+  </div>`).join('');
+
+const destData = {
+  email: {
+    stats: [['이메일문의 페이지 진입 세션수','4,120','▲8.1%'],['문의 폼 진입 세션수','612','▼4.9%'],['이메일문의 완료건수','184','▲6.2%'],['문의 제출율','30.1%','▲2.1%p']],
+    funnel: [['이메일문의 페이지 진입',4120],['문의 폼 진입',612],['이메일문의 완료',184]],
+    exit: [['이탈 · 세션 종료',1980,44.2],['홈페이지',820,18.3],['서비스 소개 다른 페이지',610,13.6],['소개서 신청 페이지',420,9.4]]
+  },
+  brochure: {
+    stats: [['소개서 신청 페이지 진입 세션수','2,860','▲5.0%'],['신청 폼 진입 세션수','340','▼3.2%'],['소개서 신청 완료건수','96','▲9.4%'],['신청 제출율','28.2%','▲1.6%p']],
+    funnel: [['소개서 신청 페이지 진입',2860],['신청 폼 진입',340],['소개서 신청 완료',96]],
+    exit: [['이탈 · 세션 종료',1420,49.7],['홈페이지',540,18.9],['이메일문의 페이지',380,13.3],['서비스 소개 다른 페이지',290,10.1]]
+  }
+};
+function renderDest(key){
+  const d = destData[key];
+  document.getElementById('dest-stats').innerHTML = d.stats.map(([l,v,w])=>`
+    <div style="background:var(--surface-1); border-radius:var(--radius); padding:0.75rem;">
+      <div style="font-size:11px; color:var(--text-secondary);">${l}</div>
+      <div style="font-size:18px; font-weight:500;">${v}</div>
+      <div style="font-size:10.5px; color:${w[0]==='▲'?'#16a34a':'#dc2626'};">${w}</div>
+    </div>`).join('');
+  const maxV = d.funnel[0][1];
+  document.getElementById('funnel-bars').innerHTML = d.funnel.map(([l,v])=>`
+    <div style="margin-bottom:10px;">
+      <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;"><span>${l}</span><span style="color:var(--text-secondary);">${v.toLocaleString()}</span></div>
+      <div style="background:var(--surface-1); border-radius:4px; height:10px;"><div style="background:#F97316; width:${Math.round(v/maxV*100)}%; height:10px; border-radius:4px;"></div></div>
+    </div>`).join('');
+  document.getElementById('exit-bars').innerHTML = d.exit.map(([l,v,p],i)=>`
+    <div style="margin-bottom:8px;">
+      <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:3px;"><span>${l}</span><span style="color:var(--text-secondary);">${v.toLocaleString()} (${p}%)</span></div>
+      <div style="background:var(--surface-1); border-radius:4px; height:8px;"><div style="background:${i===0?'#dc2626':'#378ADD'}; width:${p}%; height:8px; border-radius:4px;"></div></div>
+    </div>`).join('');
+}
+document.getElementById('dest-select').addEventListener('change', e=>renderDest(e.target.value));
+renderDest('email');
+
+const days = Array.from({length:14}, (_,i)=>`07-${String(i+15).padStart(2,'0')}`);
+const viewData = [420,480,510,390,600,650,610,480,530,590,700,640,600,660];
+const newV = [1050,1120,980,1200,1300,1150,1080,1250,1180,1400,1320,1100,1250,1300];
+const retV = [520,480,600,450,550,600,480,520,600,470,550,620,500,560];
+
+function drawCharts(){
+  ensureChart('chart-content1', {type:'line', data:{labels:days, datasets:[{data:viewData, borderColor:'#378ADD', backgroundColor:'rgba(55,138,221,0.1)', fill:true, tension:0.3, pointRadius:0}]}, options:{plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}}}});
+  ensureChart('chart-traffic1', {type:'bar', data:{labels:days, datasets:[
+    {label:'신규', data:newV, backgroundColor:'#F97316'},
+    {label:'재방문', data:retV, backgroundColor:'#FED7AA'}
+  ]}, options:{plugins:{legend:{position:'bottom', labels:{boxWidth:10, font:{size:11}}}}, scales:{x:{stacked:true}, y:{stacked:true, beginAtZero:true}}}});
+}
+
+const postTitles = ['해외 판매 시작 가이드','FedEx MOU 체결 안내','K-뷰티 역직구 트렌드','Global Checkout 활용법','통관코드 신청 방법','재고관리 자동화 사례','아마존 셀러 진출기','2026 상반기 결산'];
+document.getElementById('posts-rows').outerHTML = postTitles.map((t,i)=>`<tr style="border-bottom:0.5px solid var(--border);"><td style="padding:6px 0;">07-${String(15+i*2).padStart(2,'0')}</td><td>${t}</td><td style="text-align:right;">${(2100-i*140).toLocaleString()}</td></tr>`).join('');
+
+const contents = ['해외 판매 시작 가이드','크로스보더 물류 완전정리','통관 실수 방지법','FedEx MOU 체결 안내','K-뷰티 역직구 트렌드','Global Checkout 활용법','해외진출 세금 가이드','물류센터 선정 기준','재고관리 자동화 사례','배송대행 vs 직접배송','아마존 셀러 진출기','플랫폼별 수수료 비교','통관코드 신청 방법','국제배송 파손 대응','Global Link 연동 가이드','역직구 초기 세팅','해외 반품 프로세스','환율 리스크 관리','파트너사 인터뷰','2026 상반기 결산'];
+document.getElementById('top20-rows').outerHTML = contents.map((c,i)=>`<tr style="border-bottom:0.5px solid var(--border);"><td style="padding:6px 0;">${i+1}</td><td>${c}</td><td style="text-align:right;">${(3200-i*120).toLocaleString()}</td></tr>`).join('');
+
+const keywords = [['역직구',412,'▲8%'],['크로스보더 물류',298,'▲3%'],['해외진출 대행',210,'▼5%'],['deliveredKorea',188,'▲12%'],['배송대행 업체',165,'▲1%'],['수출 물류 대행',140,'▼2%'],['글로벌셀링 서비스',121,'▲6%'],['크로스보더 이커머스',98,'▲4%']];
+document.getElementById('keyword-rows').outerHTML = keywords.map(([k,v,w],i)=>`<tr style="border-bottom:0.5px solid var(--border);"><td style="padding:6px 0;">${i+1}</td><td>${k}</td><td style="text-align:right;">${v}</td><td style="text-align:right; color:${w[0]==='▲'?'#16a34a':'#dc2626'};">${w}</td></tr>`).join('');
+
+document.querySelectorAll('.nav').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
+    document.getElementById(btn.dataset.target).style.display='block';
+    document.getElementById('screen-title').textContent = titles[btn.dataset.target];
+    document.querySelectorAll('.nav').forEach(b=>{b.style.background='transparent'; b.style.color='var(--text-primary)'; b.style.fontWeight='400';});
+    btn.style.background='var(--bg-accent)'; btn.style.color='var(--text-accent)'; btn.style.fontWeight='500'; btn.style.borderRadius='var(--radius)';
+    drawCharts();
+  });
+});
+document.querySelector('.nav').click();
+</script>
