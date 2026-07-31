@@ -70,6 +70,7 @@
   .field input{width:100%;}
   .modal-actions{display:flex;justify-content:space-between;gap:8px;margin-top:18px;}
   .snap-row{display:grid;grid-template-columns:1fr 90px 32px;gap:8px;margin-bottom:8px;align-items:center;}
+  .blogrank-row{display:grid;grid-template-columns:60px 1.4fr 90px 130px 28px;gap:6px;margin-bottom:8px;align-items:center;}
   .snap-row-remove{color:#C4402A;cursor:pointer;font-size:18px;text-align:center;}
   .empty-state{text-align:center;padding:40px 20px;color:var(--gray-2);font-size:13.5px;line-height:1.6;}
   .conn-dot{width:7px;height:7px;border-radius:50%;background:var(--gray-2);display:inline-block;margin-right:5px;}
@@ -148,6 +149,26 @@
   </div>
 </div>
 
+<!-- 네이버블로그 인기콘텐츠(월간 순위) 입력 모달 -->
+<div class="modal-bg" id="blogrank-modal">
+  <div class="modal">
+    <h3>블로그 인기콘텐츠 순위 추가</h3>
+    <div class="field">
+      <label>기준월</label>
+      <input type="month" id="blogrank-month">
+    </div>
+    <div id="blogrank-rows"></div>
+    <button class="btn" onclick="addBlogRankRow_()" style="margin-bottom:10px;">+ 항목 추가</button>
+    <div class="modal-actions">
+      <div></div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn" onclick="closeBlogRankModal_()">취소</button>
+        <button class="btn btn-primary" onclick="saveBlogRankModal_()">저장</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -179,7 +200,7 @@ const PAGES = {
     {key:'visitors', label:'방문자수', unit:'명'},
     {key:'postClicks', label:'게시물조회수', unit:'회'}
   ]},
-  blog_contents:  { type:'snapshot', label:'블로그 · 인기 콘텐츠',   snapKey:'blogContents',   itemLabel:'콘텐츠명' }
+  blog_contents:  { type:'blogRank', label:'블로그 · 인기 콘텐츠' }
 };
 
 /* =========================================================
@@ -191,8 +212,10 @@ let state = {
   anchorDate: new Date(),
   rangeStart: null, rangeEnd: null,
   entries: { home:{}, naverblog:{} },
-  snapshots: { homeCategories:[], homeContents:[], blogContents:[] },
-  snapSelectedDate: null
+  snapshots: { homeCategories:[], homeContents:[] },
+  blogContentRanks: [],
+  snapSelectedDate: null,
+  selectedMonth: null
 };
 
 /* =========================================================
@@ -253,9 +276,9 @@ function loadAllData(){
     state.entries = { home: data.home||{}, naverblog: data.naverblog||{} };
     state.snapshots = {
       homeCategories: data.homeCategories||[],
-      homeContents: data.homeContents||[],
-      blogContents: data.blogContents||[]
+      homeContents: data.homeContents||[]
     };
+    state.blogContentRanks = data.blogContentRanks||[];
     document.getElementById('conn-dot').classList.add('ok');
     document.getElementById('conn-text').textContent='스프레드시트 연동됨';
     render();
@@ -294,9 +317,9 @@ function switchPage(page){
 function render(){
   const cfg = PAGES[state.page];
   const app = document.getElementById('app');
-  app.innerHTML = cfg.type==='combo' ? renderComboPage_(cfg) : renderSnapshotPage_(cfg);
-  if(cfg.type==='combo') afterComboRender_(cfg);
-  else afterSnapshotRender_(cfg);
+  if(cfg.type==='combo'){ app.innerHTML = renderComboPage_(cfg); afterComboRender_(cfg); }
+  else if(cfg.type==='snapshot'){ app.innerHTML = renderSnapshotPage_(cfg); afterSnapshotRender_(cfg); }
+  else if(cfg.type==='blogRank'){ app.innerHTML = renderBlogRankPage_(cfg); afterBlogRankRender_(cfg); }
 }
 
 function periodTabsHtml_(){
@@ -408,25 +431,13 @@ function afterComboRender_(cfg){
 }
 
 /* =========================================================
-   7) 스냅샷 페이지 (인기 카테고리 / 인기 콘텐츠)
+   7) 스냅샷 페이지 (인기 카테고리 / 인기 콘텐츠) — 선택한 기간 전체 합계 랭킹
    ========================================================= */
-function availableSnapDates_(rows, start, end){
-  const set = new Set();
-  rows.forEach(r=>{ if(r.date>=start && r.date<=end) set.add(r.date); });
-  return [...set].sort();
-}
 function renderSnapshotPage_(cfg){
-  const [start,end] = currentRange();
-  const rows = state.snapshots[cfg.snapKey] || [];
-  const dates = availableSnapDates_(rows, start, end);
-  if(!state.snapSelectedDate || !dates.includes(state.snapSelectedDate)){
-    state.snapSelectedDate = dates.length ? dates[dates.length-1] : null;
-  }
-
   return `
     <div id="report-capture">
     <div class="page-title">
-      <div><h1>${cfg.label}</h1><div class="sub">${rangeLabel()} 범위 내 스냅샷</div></div>
+      <div><h1>${cfg.label}</h1><div class="sub">${rangeLabel()} 합계 랭킹</div></div>
       <div class="toolbar">
         <button class="btn" onclick="loadAllData()">↻ 새로고침</button>
         <button class="btn" onclick="openSnapModal_('${cfg.snapKey}','${cfg.itemLabel}')">+ 데이터 추가</button>
@@ -434,29 +445,30 @@ function renderSnapshotPage_(cfg){
       </div>
     </div>
     ${periodTabsHtml_()}
-    ${dates.length===0 ? `<div class="empty-state">이 기간엔 입력된 스냅샷이 없어요.<br>'+ 데이터 추가'로 GA4에서 확인한 순위를 넣어보세요.</div>` : `
-      <div class="snap-picker">
-        ${dates.map(d=>`<div class="snap-chip ${d===state.snapSelectedDate?'active':''}" onclick="state.snapSelectedDate='${d}';render();">${d} 기준</div>`).join('')}
-      </div>
-      <div class="panel" id="snap-panel"></div>
-    `}
+    <div class="panel" id="snap-panel"></div>
     </div>
   `;
 }
 function afterSnapshotRender_(cfg){
-  if(!state.snapSelectedDate) return;
-  const rows = (state.snapshots[cfg.snapKey]||[]).filter(r=>r.date===state.snapSelectedDate);
-  const sorted = [...rows].sort((a,b)=> b.views-a.views);
-  const total = sorted.reduce((s,r)=>s+r.views,0);
+  const [start,end] = currentRange();
+  const rows = (state.snapshots[cfg.snapKey]||[]).filter(r=> r.date>=start && r.date<=end);
+  const totals = {};
+  rows.forEach(r=>{ totals[r.item] = (totals[r.item]||0) + Number(r.views||0); });
+  const ranked = Object.keys(totals).map(item=>({item, views:totals[item]})).sort((a,b)=> b.views-a.views);
+  const total = ranked.reduce((s,r)=>s+r.views,0);
+
+  if(ranked.length===0){
+    document.getElementById('snap-panel').innerHTML = `<div class="empty-state">이 기간엔 입력된 데이터가 없어요.<br>'+ 데이터 추가'로 GA4에서 확인한 순위를 넣어보세요.</div>`;
+    return;
+  }
   document.getElementById('snap-panel').innerHTML = `
-    <h3>${state.snapSelectedDate} 기준 · 총 ${total.toLocaleString()}회</h3>
+    <h3>${rangeLabel()} · 총 ${total.toLocaleString()}회</h3>
     <table>
-      <thead><tr><th>${cfg.itemLabel}</th><th>조회수</th><th></th></tr></thead>
+      <thead><tr><th>${cfg.itemLabel}</th><th>조회수</th></tr></thead>
       <tbody>
-        ${sorted.map((r,i)=>`<tr>
+        ${ranked.map((r,i)=>`<tr>
           <td><span class="rank-num">${i+1}</span>${escHtml_(r.item)}</td>
           <td>${r.views.toLocaleString()}</td>
-          <td><span class="btn" style="padding:4px 9px;font-size:11.5px;color:#C4402A;border-color:#C4402A;" onclick="deleteSnapRow_('${cfg.snapKey}','${state.snapSelectedDate}','${escAttr_(r.item)}')">삭제</span></td>
         </tr>`).join('')}
       </tbody>
     </table>
@@ -470,6 +482,105 @@ function deleteSnapRow_(snapKey, date, item){
   writeToSheet({ action:'deleteSnapshotRow', channel:snapKey, date, item })
     .then(()=> loadAllData())
     .catch(e=>alert('삭제 실패: '+e.message));
+}
+
+/* =========================================================
+   7-2) 네이버블로그 인기콘텐츠 (월간 순위 전용 리스트)
+   ========================================================= */
+function monthSortKey_(m){
+  // "2026-06" 또는 "2026년 6월" 등 다양한 표기를 연-월 숫자로 변환해 정렬용 키를 만듦
+  let match = String(m).match(/(\d{4})\s*[-년]\s*(\d{1,2})/);
+  if(match) return Number(match[1])*100 + Number(match[2]);
+  return 0;
+}
+function availableMonths_(){
+  const set = new Set();
+  state.blogContentRanks.forEach(r=> set.add(r.month));
+  return [...set].sort((a,b)=> monthSortKey_(b)-monthSortKey_(a));
+}
+function renderBlogRankPage_(cfg){
+  const months = availableMonths_();
+  if(!state.selectedMonth || !months.includes(state.selectedMonth)){
+    state.selectedMonth = months.length ? months[0] : null;
+  }
+  return `
+    <div id="report-capture">
+    <div class="page-title">
+      <div><h1>${cfg.label}</h1><div class="sub">월간 순위 (GA4/네이버 블로그 통계 기준)</div></div>
+      <div class="toolbar">
+        <button class="btn" onclick="loadAllData()">↻ 새로고침</button>
+        <button class="btn" onclick="openBlogRankModal_()">+ 데이터 추가</button>
+        <button class="btn btn-primary" onclick="exportPDF()">PDF 다운로드</button>
+      </div>
+    </div>
+    ${months.length===0 ? `<div class="empty-state">아직 입력된 데이터가 없어요.<br>'+ 데이터 추가'로 이번 달 순위를 넣어보세요.</div>` : `
+      <div class="snap-picker">
+        ${months.map(m=>`<div class="snap-chip ${m===state.selectedMonth?'active':''}" onclick="state.selectedMonth='${m}';render();">${m}</div>`).join('')}
+      </div>
+      <div class="panel" id="blogrank-panel"></div>
+    `}
+    </div>
+  `;
+}
+function afterBlogRankRender_(cfg){
+  if(!state.selectedMonth) return;
+  const rows = state.blogContentRanks.filter(r=>r.month===state.selectedMonth).sort((a,b)=>a.rank-b.rank);
+  document.getElementById('blogrank-panel').innerHTML = `
+    <table>
+      <thead><tr><th>순위</th><th>제목</th><th>조회수</th><th>작성일</th><th></th></tr></thead>
+      <tbody>
+        ${rows.map(r=>`<tr>
+          <td>${r.rank}</td>
+          <td>${escHtml_(r.title)}</td>
+          <td>${r.views.toLocaleString()}</td>
+          <td>${r.publishedAt||'-'}</td>
+          <td><span class="btn" style="padding:4px 9px;font-size:11.5px;color:#C4402A;border-color:#C4402A;" onclick="deleteBlogRank_('${state.selectedMonth}','${escAttr_(r.title)}')">삭제</span></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  `;
+}
+function deleteBlogRank_(month, title){
+  if(!confirm('이 항목을 삭제할까요?')) return;
+  writeToSheet({ action:'deleteBlogRank', month, title })
+    .then(()=> loadAllData())
+    .catch(e=>alert('삭제 실패: '+e.message));
+}
+function openBlogRankModal_(){
+  const now = new Date();
+  document.getElementById('blogrank-month').value = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  document.getElementById('blogrank-rows').innerHTML='';
+  addBlogRankRow_(); addBlogRankRow_(); addBlogRankRow_();
+  document.getElementById('blogrank-modal').classList.add('open');
+}
+function addBlogRankRow_(){
+  const wrap = document.getElementById('blogrank-rows');
+  const row = document.createElement('div');
+  row.className = 'blogrank-row';
+  row.innerHTML = `
+    <input type="number" placeholder="순위" min="1" class="br-rank">
+    <input type="text" placeholder="제목" class="br-title">
+    <input type="number" placeholder="조회수" min="0" class="br-views">
+    <input type="date" placeholder="작성일" class="br-pub">
+    <div class="snap-row-remove" onclick="this.parentElement.remove()">✕</div>
+  `;
+  wrap.appendChild(row);
+}
+function closeBlogRankModal_(){ document.getElementById('blogrank-modal').classList.remove('open'); }
+function saveBlogRankModal_(){
+  const month = document.getElementById('blogrank-month').value;
+  if(!month){ alert('기준월을 선택해주세요.'); return; }
+  const rows = [...document.querySelectorAll('#blogrank-rows .blogrank-row')].map(r=>({
+    rank: Number(r.querySelector('.br-rank').value||0),
+    title: r.querySelector('.br-title').value.trim(),
+    views: Number(r.querySelector('.br-views').value||0),
+    publishedAt: r.querySelector('.br-pub').value||''
+  })).filter(r=>r.title);
+  if(rows.length===0){ alert('항목을 하나 이상 입력해주세요.'); return; }
+
+  Promise.all(rows.map(r=> writeToSheet({ action:'appendBlogRank', month, ...r })))
+    .then(()=>{ closeBlogRankModal_(); loadAllData(); })
+    .catch(e=>alert('저장 실패: '+e.message));
 }
 
 /* ---------- 스냅샷 입력 모달 ---------- */
