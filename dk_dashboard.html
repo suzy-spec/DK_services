@@ -1,235 +1,582 @@
-/**
- * DK Analytics Dashboard ↔ Google Sheets 백엔드 (v8)
- *
- * v7 대비 변경점:
- *   1) 링크드인 채널 완전 삭제
- *   2) 인기 카테고리/콘텐츠용 "스냅샷" 시트 3개 추가
- *      - 홈페이지_인기카테고리   : 날짜 | 카테고리 | 조회수
- *      - 홈페이지_인기콘텐츠     : 날짜 | 콘텐츠명 | 조회수
- *      - 네이버블로그_인기콘텐츠 : 날짜 | 콘텐츠명 | 조회수
- *      → GA4에서 확인할 때마다(비정기, 최소 주1회) 그 날짜로 여러 줄 추가하는 방식
- *      → 대시보드의 "+ 데이터 추가" 모달에서 여러 줄 한번에 입력 가능
- *
- * 기존 채널(홈페이지/네이버블로그)은 v7과 동일 (문의수 없음, 수동입력).
- *
- * [설치 방법]
- * 1. 확장 프로그램 > Apps Script → 기존 코드 전부 지우고 이 파일 내용 붙여넣기 → 저장
- * 2. 배포 > 배포 관리 > 연필 아이콘 > "새 버전"으로 다시 배포 (URL 그대로 유지)
- * 3. onEdit 트리거는 그대로 유지 (건드릴 필요 없음)
- * 4. 링크드인 탭은 이제 안 쓰니 지우셔도 되고 그냥 두셔도 상관없어요.
- */
-
-const SHEET_CONFIG = {
-  home: {
-    name: '홈페이지',
-    keys: ['date', 'visitors', 'pageviews', 'source'],
-    headers: ['날짜', '방문자수', '조회수', '출처(수동/GA4)']
-  },
-  naverblog: {
-    name: '네이버블로그',
-    keys: ['date', 'visitors', 'postClicks', 'comments', 'messages'],
-    headers: ['날짜', '방문자수', '게시물조회수', '댓글', '쪽지']
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DK Analytics Dashboard</title>
+<style>
+  :root{
+    --orange:#E85D25; --orange-light:#FFF1E8; --ink:#222222;
+    --gray-1:#5B5F66; --gray-2:#8A8F98; --line:#E7E5E1; --bg:#FAFAF8;
+    --card:#FFFFFF; --green:#2E9E5B; --blue:#3A6EE8;
   }
-};
-const INPUT_SOURCE_LABEL = '입력경로';
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Malgun Gothic","Apple SD Gothic Neo",sans-serif;background:var(--bg);color:var(--ink);}
+  header{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:50;}
+  .nav-inner{max-width:1080px;margin:0 auto;padding:0 20px;display:flex;align-items:center;height:60px;gap:8px;flex-wrap:wrap;}
+  .brand{font-weight:800;font-size:15px;letter-spacing:-0.02em;margin-right:16px;white-space:nowrap;}
+  .brand span{color:var(--orange);}
+  .nav-btn{position:relative;padding:8px 14px;border-radius:8px;border:none;background:transparent;font-size:14px;font-weight:600;color:var(--gray-1);cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap;}
+  .nav-btn.active,.nav-btn:hover{background:var(--orange-light);color:var(--orange);}
+  .dropdown{position:relative;}
+  .dropdown-menu{display:none;position:absolute;top:46px;left:0;background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.08);min-width:190px;padding:6px;z-index:60;}
+  .dropdown.open .dropdown-menu{display:block;}
+  .dropdown-item{padding:10px 12px;border-radius:7px;font-size:13.5px;font-weight:600;color:var(--ink);cursor:pointer;display:flex;align-items:center;gap:8px;}
+  .dropdown-item.active{background:var(--orange-light);color:var(--orange);}
+  .dropdown-item:hover{background:var(--orange-light);color:var(--orange);}
+  main{max-width:1080px;margin:0 auto;padding:28px 20px 80px;}
+  .page-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:10px;}
+  .page-title h1{font-size:21px;margin:0;letter-spacing:-0.02em;}
+  .page-title .sub{color:var(--gray-2);font-size:13px;margin-top:2px;}
+  .btn{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:9px 14px;border-radius:8px;font-size:13.5px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
+  .btn:hover{border-color:var(--orange);color:var(--orange);}
+  .btn-primary{background:var(--orange);border-color:var(--orange);color:#fff;}
+  .btn-primary:hover{background:#d1531f;color:#fff;}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;}
+  .period-tabs{display:flex;gap:6px;margin:18px 0 14px;flex-wrap:wrap;}
+  .ptab{padding:7px 13px;border-radius:20px;border:1px solid var(--line);background:var(--card);font-size:13px;font-weight:600;color:var(--gray-1);cursor:pointer;}
+  .ptab.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .range-nav{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+  .range-nav .label{font-weight:700;font-size:14.5px;min-width:150px;text-align:center;}
+  .icon-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:14px;}
+  .icon-btn:hover{border-color:var(--orange);color:var(--orange);}
+  .range-inputs{display:flex;align-items:center;gap:8px;}
+  input[type=date],input[type=number],input[type=text]{border:1px solid var(--line);border-radius:7px;padding:8px 10px;font-size:13.5px;font-family:inherit;}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:22px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;}
+  .card .k{font-size:12.5px;color:var(--gray-2);font-weight:600;margin-bottom:6px;}
+  .card .v{font-size:26px;font-weight:800;letter-spacing:-0.02em;}
+  .card .badge{display:inline-block;margin-top:8px;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:20px;}
+  .badge.manual{background:#EFF1F4;color:var(--gray-1);}
+  .badge.ga4{background:#E8F1FF;color:var(--blue);}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:20px;}
+  .panel h3{margin:0 0 14px;font-size:14.5px;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th,td{text-align:right;padding:9px 10px;border-bottom:1px solid var(--line);}
+  th:first-child,td:first-child{text-align:left;}
+  th{color:var(--gray-2);font-weight:700;font-size:11.5px;}
+  tbody tr:hover{background:var(--orange-light);}
+  .rank-num{color:var(--gray-2);font-weight:700;font-size:11.5px;margin-right:8px;}
+  .snap-picker{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0;}
+  .snap-chip{padding:6px 12px;border-radius:20px;border:1px solid var(--line);background:#fff;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--gray-1);}
+  .snap-chip.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(20,18,16,.45);z-index:100;align-items:center;justify-content:center;padding:16px;}
+  .modal-bg.open{display:flex;}
+  .modal{background:#fff;border-radius:16px;padding:22px;width:100%;max-width:460px;max-height:90vh;overflow:auto;}
+  .modal h3{margin:0 0 4px;font-size:16px;}
+  .modal .msub{color:var(--gray-2);font-size:12.5px;margin-bottom:16px;}
+  .field{margin-bottom:13px;}
+  .field label{display:block;font-size:12.5px;font-weight:700;color:var(--gray-1);margin-bottom:5px;}
+  .field input{width:100%;}
+  .modal-actions{display:flex;justify-content:space-between;gap:8px;margin-top:18px;}
+  .snap-row{display:grid;grid-template-columns:1fr 90px 32px;gap:8px;margin-bottom:8px;align-items:center;}
+  .snap-row-remove{color:#C4402A;cursor:pointer;font-size:18px;text-align:center;}
+  .empty-state{text-align:center;padding:40px 20px;color:var(--gray-2);font-size:13.5px;line-height:1.6;}
+  .conn-dot{width:7px;height:7px;border-radius:50%;background:var(--gray-2);display:inline-block;margin-right:5px;}
+  .conn-dot.ok{background:var(--green);}
+  #report-capture{background:#fff;padding:20px;}
+  canvas{max-width:100%;}
+  @media(max-width:640px){ .brand{display:none;} .range-nav .label{min-width:auto;} .card .v{font-size:22px;} }
+</style>
+</head>
+<body>
 
-const SNAPSHOT_CONFIG = {
-  homeCategories: { name: '홈페이지_인기카테고리', itemLabel: '카테고리' },
-  homeContents: { name: '홈페이지_인기콘텐츠', itemLabel: '콘텐츠명' },
-  blogContents: { name: '네이버블로그_인기콘텐츠', itemLabel: '콘텐츠명' }
+<header>
+  <div class="nav-inner">
+    <div class="brand">DK <span>Analytics</span></div>
+
+    <div class="dropdown" id="dd-home">
+      <button class="nav-btn" onclick="toggleDropdown(event,'dd-home')">🏠 아임웹 ▾</button>
+      <div class="dropdown-menu">
+        <div class="dropdown-item" data-page="home_overview" onclick="switchPage('home_overview')">📈 방문자수·조회수</div>
+        <div class="dropdown-item" data-page="home_categories" onclick="switchPage('home_categories')">📁 인기 카테고리</div>
+        <div class="dropdown-item" data-page="home_contents" onclick="switchPage('home_contents')">📄 인기 콘텐츠</div>
+      </div>
+    </div>
+
+    <div class="dropdown" id="dd-blog">
+      <button class="nav-btn" onclick="toggleDropdown(event,'dd-blog')">📝 블로그 ▾</button>
+      <div class="dropdown-menu">
+        <div class="dropdown-item" data-page="blog_overview" onclick="switchPage('blog_overview')">📈 방문자수·조회수</div>
+        <div class="dropdown-item" data-page="blog_contents" onclick="switchPage('blog_contents')">📄 인기 콘텐츠</div>
+      </div>
+    </div>
+
+    <button class="nav-btn" onclick="openSpreadsheet()">📊 스프레드시트</button>
+
+    <div style="margin-left:auto;font-size:11.5px;color:var(--gray-2);display:flex;align-items:center;">
+      <span class="conn-dot" id="conn-dot"></span><span id="conn-text">연결 확인 중</span>
+    </div>
+  </div>
+</header>
+
+<main id="app"></main>
+
+<!-- 일반(방문자수/조회수 등) 입력 모달 -->
+<div class="modal-bg" id="entry-modal">
+  <div class="modal">
+    <h3 id="modal-title">데이터 입력</h3>
+    <div class="msub" id="modal-date-label"></div>
+    <div id="modal-fields"></div>
+    <div class="modal-actions">
+      <button class="btn" style="color:#C4402A;border-color:#C4402A;" id="modal-delete" onclick="deleteEntry()">삭제</button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn" onclick="closeModal()">취소</button>
+        <button class="btn btn-primary" onclick="saveEntry()">저장</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 인기카테고리/콘텐츠 스냅샷 입력 모달 -->
+<div class="modal-bg" id="snap-modal">
+  <div class="modal">
+    <h3 id="snap-modal-title">데이터 추가</h3>
+    <div class="field">
+      <label>기준 날짜 (GA4에서 확인한 날짜)</label>
+      <input type="date" id="snap-date">
+    </div>
+    <div id="snap-rows"></div>
+    <button class="btn" onclick="addSnapRow_()" style="margin-bottom:10px;">+ 항목 추가</button>
+    <div class="modal-actions">
+      <div></div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn" onclick="closeSnapModal_()">취소</button>
+        <button class="btn btn-primary" onclick="saveSnapModal_()">저장</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+/* =========================================================
+   0) 설정
+   ========================================================= */
+const SHEET_SYNC_URL = "https://script.google.com/macros/s/AKfycbzkOXERTBQ3Yt8-2zcHBCJJ6G8SaxpiTwSmCRKyE1Wbrx6kqxuk3bDsDbSpYro2SLG0EA/exec";
+const SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1Q0_242kJlIuwHG6OnnB7lKj9ZkzpCVRkW9tsew_JV4o/edit?gid=373514828#gid=373514828";
+function openSpreadsheet(){ window.open(SPREADSHEET_URL, '_blank'); }
+function isConfigured(){ return SHEET_SYNC_URL && SHEET_SYNC_URL.indexOf('여기에') === -1; }
+
+/* 방문자수/조회수 등 - 매일 한 줄씩 수동입력하는 채널 */
+const ENTRY_CHANNELS = {
+  home: { name:'홈페이지', keys:['visitors','pageviews'], headers:['방문자수','조회수'] },
+  naverblog: { name:'네이버블로그', keys:['visitors','postClicks','comments','messages'], headers:['방문자수','게시물조회수','댓글','쪽지'] }
 };
 
-/* ---------- 조회 ---------- */
-function doGet(e) {
-  const result = { home: {}, naverblog: {} };
-  Object.keys(SHEET_CONFIG).forEach(channel => {
-    const cfg = SHEET_CONFIG[channel];
-    const sheet = getOrCreateChannelSheet_(channel);
-    const lastRow = sheet.getLastRow();
-    if (lastRow < 2) return;
-    const values = sheet.getRange(2, 1, lastRow - 1, cfg.keys.length + 1).getValues();
-    values.forEach(row => {
-      const date = normalizeDate_(row[0]);
-      if (!date) return;
-      const obj = {};
-      cfg.keys.forEach((k, i) => { if (k !== 'date') obj[k] = row[i]; });
-      obj.inputSource = row[cfg.keys.length] || '';
-      result[channel][date] = obj;
+/* 화면에 보이는 5개 페이지 정의 */
+const PAGES = {
+  home_overview:  { type:'combo', label:'아임웹', channel:'home', metrics:[
+    {key:'visitors', label:'방문자수', unit:'명'},
+    {key:'pageviews', label:'조회수', unit:'회'}
+  ]},
+  home_categories:{ type:'snapshot', label:'아임웹 · 인기 카테고리', snapKey:'homeCategories', itemLabel:'카테고리' },
+  home_contents:  { type:'snapshot', label:'아임웹 · 인기 콘텐츠',   snapKey:'homeContents',   itemLabel:'콘텐츠명' },
+  blog_overview:  { type:'combo', label:'블로그', channel:'naverblog', metrics:[
+    {key:'visitors', label:'방문자수', unit:'명'},
+    {key:'postClicks', label:'게시물조회수', unit:'회'}
+  ]},
+  blog_contents:  { type:'snapshot', label:'블로그 · 인기 콘텐츠',   snapKey:'blogContents',   itemLabel:'콘텐츠명' }
+};
+
+/* =========================================================
+   1) 상태
+   ========================================================= */
+let state = {
+  page: 'home_overview',
+  periodType: 'month',
+  anchorDate: new Date(),
+  rangeStart: null, rangeEnd: null,
+  entries: { home:{}, naverblog:{} },
+  snapshots: { homeCategories:[], homeContents:[], blogContents:[] },
+  snapSelectedDate: null
+};
+
+/* =========================================================
+   2) 날짜 유틸
+   ========================================================= */
+function fmt(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function parseDate(s){ const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); }
+function addDays(d,n){ const r=new Date(d); r.setDate(r.getDate()+n); return r; }
+
+function currentRange(){
+  const a = state.anchorDate;
+  if(state.periodType==='day'){ const s=fmt(a); return [s,s]; }
+  if(state.periodType==='week'){
+    const dow = (a.getDay()+6)%7;
+    const mon = addDays(a, -dow); const sun = addDays(mon,6);
+    return [fmt(mon), fmt(sun)];
+  }
+  if(state.periodType==='month'){
+    const first = new Date(a.getFullYear(), a.getMonth(), 1);
+    const last = new Date(a.getFullYear(), a.getMonth()+1, 0);
+    return [fmt(first), fmt(last)];
+  }
+  if(state.periodType==='year'){
+    return [a.getFullYear()+'-01-01', a.getFullYear()+'-12-31'];
+  }
+  return [state.rangeStart || fmt(a), state.rangeEnd || fmt(a)];
+}
+function rangeLabel(){
+  const a = state.anchorDate;
+  if(state.periodType==='day') return fmt(a);
+  if(state.periodType==='week'){ const [s,e]=currentRange(); return s+' ~ '+e; }
+  if(state.periodType==='month') return a.getFullYear()+'년 '+(a.getMonth()+1)+'월';
+  if(state.periodType==='year') return a.getFullYear()+'년';
+  const [s,e]=currentRange(); return s+' ~ '+e;
+}
+function shiftAnchor(dir){
+  const a = state.anchorDate;
+  if(state.periodType==='day') state.anchorDate = addDays(a,dir);
+  else if(state.periodType==='week') state.anchorDate = addDays(a,7*dir);
+  else if(state.periodType==='month') state.anchorDate = new Date(a.getFullYear(), a.getMonth()+dir, 1);
+  else if(state.periodType==='year') state.anchorDate = new Date(a.getFullYear()+dir, a.getMonth(), 1);
+  render();
+}
+function setPeriodType(p){ state.periodType=p; render(); }
+function setRange(){
+  state.rangeStart = document.getElementById('range-start').value;
+  state.rangeEnd = document.getElementById('range-end').value;
+  render();
+}
+
+/* =========================================================
+   3) 데이터 로드
+   ========================================================= */
+function loadAllData(){
+  if(!isConfigured()){ document.getElementById('conn-text').textContent='Apps Script URL 미설정'; render(); return; }
+  document.getElementById('conn-text').textContent='데이터 불러오는 중...';
+  fetch(SHEET_SYNC_URL).then(r=>r.json()).then(data=>{
+    state.entries = { home: data.home||{}, naverblog: data.naverblog||{} };
+    state.snapshots = {
+      homeCategories: data.homeCategories||[],
+      homeContents: data.homeContents||[],
+      blogContents: data.blogContents||[]
+    };
+    document.getElementById('conn-dot').classList.add('ok');
+    document.getElementById('conn-text').textContent='스프레드시트 연동됨';
+    render();
+  }).catch(()=>{
+    document.getElementById('conn-text').textContent='연동 오류 (Apps Script URL/배포 설정 확인)';
+    render();
+  });
+}
+function writeToSheet(body){
+  return fetch(SHEET_SYNC_URL, { method:'POST', body: JSON.stringify(body) }).then(r=>r.json());
+}
+
+/* =========================================================
+   4) 내비게이션
+   ========================================================= */
+function toggleDropdown(e,id){
+  e.stopPropagation();
+  document.querySelectorAll('.dropdown').forEach(el=>{ if(el.id!==id) el.classList.remove('open'); });
+  document.getElementById(id).classList.toggle('open');
+}
+document.addEventListener('click', ()=> document.querySelectorAll('.dropdown').forEach(el=>el.classList.remove('open')) );
+
+function switchPage(page){
+  state.page = page;
+  state.periodType = 'month';
+  state.anchorDate = new Date();
+  state.snapSelectedDate = null;
+  document.querySelectorAll('.dropdown').forEach(el=>el.classList.remove('open'));
+  document.querySelectorAll('.dropdown-item').forEach(el=> el.classList.toggle('active', el.dataset.page===page));
+  render();
+}
+
+/* =========================================================
+   5) 렌더 디스패치
+   ========================================================= */
+function render(){
+  const cfg = PAGES[state.page];
+  const app = document.getElementById('app');
+  app.innerHTML = cfg.type==='combo' ? renderComboPage_(cfg) : renderSnapshotPage_(cfg);
+  if(cfg.type==='combo') afterComboRender_(cfg);
+  else afterSnapshotRender_(cfg);
+}
+
+function periodTabsHtml_(){
+  return `
+    <div class="period-tabs">
+      ${['day','week','month','year','range'].map(p=>`
+        <div class="ptab ${state.periodType===p?'active':''}" onclick="setPeriodType('${p}')">
+          ${ {day:'일간',week:'주간',month:'월간',year:'연간',range:'기간지정'}[p] }
+        </div>`).join('')}
+    </div>
+    ${state.periodType==='range' ? `
+      <div class="range-nav">
+        <div class="range-inputs">
+          <input type="date" id="range-start" value="${state.rangeStart||currentRange()[0]}" onchange="setRange()">
+          <span>~</span>
+          <input type="date" id="range-end" value="${state.rangeEnd||currentRange()[1]}" onchange="setRange()">
+        </div>
+      </div>
+    ` : `
+      <div class="range-nav">
+        <button class="icon-btn" onclick="shiftAnchor(-1)">‹</button>
+        <div class="label">${rangeLabel()}</div>
+        <button class="icon-btn" onclick="shiftAnchor(1)">›</button>
+      </div>
+    `}
+  `;
+}
+
+/* =========================================================
+   6) 콤보 페이지 (방문자수 · 조회수를 한 페이지에 나란히)
+   ========================================================= */
+function renderComboPage_(cfg){
+  return `
+    <div id="report-capture">
+    <div class="page-title">
+      <div><h1>${cfg.label}</h1><div class="sub">${rangeLabel()} 기준 데이터</div></div>
+      <div class="toolbar">
+        <button class="btn" onclick="loadAllData()">↻ 새로고침</button>
+        <button class="btn" onclick="openEntryModal_('${fmt(new Date())}')">+ 오늘 데이터 입력</button>
+        <button class="btn btn-primary" onclick="exportPDF()">PDF 다운로드</button>
+      </div>
+    </div>
+    ${periodTabsHtml_()}
+    <div class="cards" id="combo-cards"></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;margin-bottom:20px;">
+      ${cfg.metrics.map(m=>`
+        <div class="panel">
+          <h3>${m.label} 추이</h3>
+          <canvas id="chart-${m.key}" height="110"></canvas>
+        </div>`).join('')}
+    </div>
+    <div class="panel"><h3>일자별 내역</h3><div id="combo-table"></div></div>
+    </div>
+  `;
+}
+let comboCharts = {};
+function afterComboRender_(cfg){
+  const [start,end] = currentRange();
+  const data = state.entries[cfg.channel] || {};
+  const labels = []; const rows = [];
+  const series = {}; cfg.metrics.forEach(m=> series[m.key]=[]);
+
+  let cursor = parseDate(start); const endD = parseDate(end);
+  while(fmt(cursor) <= fmt(endD)){
+    const key = fmt(cursor); labels.push(key.slice(5));
+    const e = data[key];
+    cfg.metrics.forEach(m=> series[m.key].push(e ? Number(e[m.key]||0) : 0));
+    if(e) rows.push({date:key, ...e});
+    cursor = addDays(cursor,1);
+  }
+
+  document.getElementById('combo-cards').innerHTML = cfg.metrics.map(m=>{
+    const total = series[m.key].reduce((a,b)=>a+b,0);
+    const avg = series[m.key].length ? Math.round(total/series[m.key].length*10)/10 : 0;
+    return `
+      <div class="card"><div class="k">${m.label} 합계</div><div class="v">${total.toLocaleString()}${m.unit}</div></div>
+      <div class="card"><div class="k">${m.label} 일평균</div><div class="v">${avg.toLocaleString()}${m.unit}</div></div>
+    `;
+  }).join('');
+
+  const colors = ['#E85D25','#3A6EE8'];
+  cfg.metrics.forEach((m,i)=>{
+    const ctx = document.getElementById('chart-'+m.key);
+    if(comboCharts[m.key]) comboCharts[m.key].destroy();
+    comboCharts[m.key] = new Chart(ctx, {
+      type:'line',
+      data:{ labels, datasets:[{ label:m.label, data:series[m.key], borderColor:colors[i%colors.length], backgroundColor:colors[i%colors.length]+'22', tension:.3, fill:true, pointRadius:2 }] },
+      options:{ responsive:true, plugins:{legend:{display:false}}, scales:{ x:{ticks:{font:{size:10}}}, y:{ticks:{font:{size:10}},beginAtZero:true} } }
     });
   });
 
-  Object.keys(SNAPSHOT_CONFIG).forEach(key => {
-    result[key] = readSnapshotSheet_(key);
+  const tableEl = document.getElementById('combo-table');
+  if(rows.length===0){ tableEl.innerHTML = `<div class="empty-state">이 기간에 입력된 데이터가 없어요.<br>'+ 오늘 데이터 입력'으로 추가해보세요.</div>`; return; }
+  const sorted = [...rows].sort((a,b)=> a.date<b.date?1:-1);
+  const entryCfg = ENTRY_CHANNELS[cfg.channel];
+  tableEl.innerHTML = `
+    <table>
+      <thead><tr><th>날짜</th>${entryCfg.headers.map(h=>`<th>${h}</th>`).join('')}<th>구분</th><th></th></tr></thead>
+      <tbody>
+        ${sorted.map(r=>`<tr>
+          <td>${r.date}</td>
+          ${entryCfg.keys.map(k=>`<td>${Number(r[k]||0).toLocaleString()}</td>`).join('')}
+          <td><span class="badge ${r.source==='ga4'?'ga4':'manual'}">${r.source==='ga4'?'GA4 자동':'수동'}</span></td>
+          <td><span class="btn" style="padding:4px 9px;font-size:11.5px;" onclick="openEntryModal_('${r.date}')">수정</span></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+/* =========================================================
+   7) 스냅샷 페이지 (인기 카테고리 / 인기 콘텐츠)
+   ========================================================= */
+function availableSnapDates_(rows, start, end){
+  const set = new Set();
+  rows.forEach(r=>{ if(r.date>=start && r.date<=end) set.add(r.date); });
+  return [...set].sort();
+}
+function renderSnapshotPage_(cfg){
+  const [start,end] = currentRange();
+  const rows = state.snapshots[cfg.snapKey] || [];
+  const dates = availableSnapDates_(rows, start, end);
+  if(!state.snapSelectedDate || !dates.includes(state.snapSelectedDate)){
+    state.snapSelectedDate = dates.length ? dates[dates.length-1] : null;
+  }
+
+  return `
+    <div id="report-capture">
+    <div class="page-title">
+      <div><h1>${cfg.label}</h1><div class="sub">${rangeLabel()} 범위 내 스냅샷</div></div>
+      <div class="toolbar">
+        <button class="btn" onclick="loadAllData()">↻ 새로고침</button>
+        <button class="btn" onclick="openSnapModal_('${cfg.snapKey}','${cfg.itemLabel}')">+ 데이터 추가</button>
+        <button class="btn btn-primary" onclick="exportPDF()">PDF 다운로드</button>
+      </div>
+    </div>
+    ${periodTabsHtml_()}
+    ${dates.length===0 ? `<div class="empty-state">이 기간엔 입력된 스냅샷이 없어요.<br>'+ 데이터 추가'로 GA4에서 확인한 순위를 넣어보세요.</div>` : `
+      <div class="snap-picker">
+        ${dates.map(d=>`<div class="snap-chip ${d===state.snapSelectedDate?'active':''}" onclick="state.snapSelectedDate='${d}';render();">${d} 기준</div>`).join('')}
+      </div>
+      <div class="panel" id="snap-panel"></div>
+    `}
+    </div>
+  `;
+}
+function afterSnapshotRender_(cfg){
+  if(!state.snapSelectedDate) return;
+  const rows = (state.snapshots[cfg.snapKey]||[]).filter(r=>r.date===state.snapSelectedDate);
+  const sorted = [...rows].sort((a,b)=> b.views-a.views);
+  const total = sorted.reduce((s,r)=>s+r.views,0);
+  document.getElementById('snap-panel').innerHTML = `
+    <h3>${state.snapSelectedDate} 기준 · 총 ${total.toLocaleString()}회</h3>
+    <table>
+      <thead><tr><th>${cfg.itemLabel}</th><th>조회수</th><th></th></tr></thead>
+      <tbody>
+        ${sorted.map((r,i)=>`<tr>
+          <td><span class="rank-num">${i+1}</span>${escHtml_(r.item)}</td>
+          <td>${r.views.toLocaleString()}</td>
+          <td><span class="btn" style="padding:4px 9px;font-size:11.5px;color:#C4402A;border-color:#C4402A;" onclick="deleteSnapRow_('${cfg.snapKey}','${state.snapSelectedDate}','${escAttr_(r.item)}')">삭제</span></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  `;
+}
+function escHtml_(s){ return String(s).replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+function escAttr_(s){ return String(s).replace(/'/g,"\\'"); }
+
+function deleteSnapRow_(snapKey, date, item){
+  if(!confirm('이 항목을 삭제할까요?')) return;
+  writeToSheet({ action:'deleteSnapshotRow', channel:snapKey, date, item })
+    .then(()=> loadAllData())
+    .catch(e=>alert('삭제 실패: '+e.message));
+}
+
+/* ---------- 스냅샷 입력 모달 ---------- */
+let snapModalKey=null, snapModalItemLabel=null;
+function openSnapModal_(snapKey, itemLabel){
+  snapModalKey = snapKey; snapModalItemLabel = itemLabel;
+  document.getElementById('snap-modal-title').textContent = itemLabel+' 데이터 추가';
+  document.getElementById('snap-date').value = fmt(new Date());
+  document.getElementById('snap-rows').innerHTML = '';
+  addSnapRow_(); addSnapRow_(); addSnapRow_();
+  document.getElementById('snap-modal').classList.add('open');
+}
+function addSnapRow_(){
+  const wrap = document.getElementById('snap-rows');
+  const row = document.createElement('div');
+  row.className = 'snap-row';
+  row.innerHTML = `
+    <input type="text" placeholder="${snapModalItemLabel} 이름" class="snap-item">
+    <input type="number" placeholder="조회수" min="0" class="snap-views">
+    <div class="snap-row-remove" onclick="this.parentElement.remove()">✕</div>
+  `;
+  wrap.appendChild(row);
+}
+function closeSnapModal_(){ document.getElementById('snap-modal').classList.remove('open'); }
+function saveSnapModal_(){
+  const date = document.getElementById('snap-date').value;
+  if(!date){ alert('날짜를 선택해주세요.'); return; }
+  const rows = [...document.querySelectorAll('#snap-rows .snap-row')].map(r=>({
+    item: r.querySelector('.snap-item').value.trim(),
+    views: Number(r.querySelector('.snap-views').value||0)
+  })).filter(r=>r.item);
+  if(rows.length===0){ alert('항목을 하나 이상 입력해주세요.'); return; }
+
+  Promise.all(rows.map(r=> writeToSheet({ action:'appendSnapshot', channel:snapModalKey, date, item:r.item, views:r.views })))
+    .then(()=>{ closeSnapModal_(); loadAllData(); })
+    .catch(e=>alert('저장 실패: '+e.message));
+}
+
+/* =========================================================
+   8) 일반 입력 모달 (방문자수/조회수 등 매일 입력)
+   ========================================================= */
+let modalChannel=null, modalDate=null;
+function openEntryModal_(dateStr){
+  modalChannel = PAGES[state.page].channel;
+  modalDate = dateStr;
+  const cfg = ENTRY_CHANNELS[modalChannel];
+  const existing = (state.entries[modalChannel] && state.entries[modalChannel][dateStr]) || {};
+  document.getElementById('modal-title').textContent = `${cfg.name} 데이터`;
+  document.getElementById('modal-date-label').textContent = dateStr;
+  document.getElementById('modal-fields').innerHTML = cfg.keys.map((k,i)=>
+    `<div class="field"><label>${cfg.headers[i]}</label><input type="number" id="f_${k}" min="0" value="${existing[k]||0}"></div>`
+  ).join('');
+  document.getElementById('modal-delete').style.display = (state.entries[modalChannel]&&state.entries[modalChannel][dateStr]) ? 'inline-flex' : 'none';
+  document.getElementById('entry-modal').classList.add('open');
+}
+function closeModal(){ document.getElementById('entry-modal').classList.remove('open'); }
+function saveEntry(){
+  if(!isConfigured()){ alert('먼저 SHEET_SYNC_URL에 Apps Script 웹앱 URL을 넣어주세요.'); return; }
+  const cfg = ENTRY_CHANNELS[modalChannel];
+  const payload = { action:'upsert', channel:modalChannel, date:modalDate };
+  cfg.keys.forEach(k=> payload[k] = Number(document.getElementById('f_'+k).value||0));
+  const saveBtn = document.querySelector('#entry-modal .btn-primary');
+  if(saveBtn){ saveBtn.disabled=true; saveBtn.textContent='저장 중...'; }
+  writeToSheet(payload)
+    .then(res=>{
+      if(!res.ok) throw new Error(res.error||'알 수 없는 오류');
+      if(!state.entries[modalChannel]) state.entries[modalChannel]={};
+      state.entries[modalChannel][modalDate] = payload;
+      closeModal(); render();
+    })
+    .catch(e=>alert('저장 실패: '+e.message))
+    .finally(()=>{ if(saveBtn){ saveBtn.disabled=false; saveBtn.textContent='저장'; } });
+}
+function deleteEntry(){
+  if(!confirm(modalDate+' 데이터를 삭제할까요?')) return;
+  writeToSheet({ action:'delete', channel:modalChannel, date:modalDate })
+    .then(res=>{
+      if(!res.ok) throw new Error(res.error||'알 수 없는 오류');
+      delete state.entries[modalChannel][modalDate];
+      closeModal(); render();
+    })
+    .catch(e=>alert('삭제 실패: '+e.message));
+}
+
+/* =========================================================
+   9) PDF 다운로드
+   ========================================================= */
+function exportPDF(){
+  const target = document.getElementById('report-capture');
+  html2canvas(target, {scale:2, backgroundColor:'#ffffff'}).then(canvas=>{
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p','mm','a4');
+    const pageW=210, pageH=297, imgW=pageW-20;
+    const imgH = canvas.height*imgW/canvas.width;
+    let heightLeft=imgH, position=10;
+    const imgData = canvas.toDataURL('image/png');
+    pdf.addImage(imgData,'PNG',10,position,imgW,imgH);
+    heightLeft -= (pageH-20);
+    while(heightLeft>0){ position = heightLeft-imgH+10; pdf.addPage(); pdf.addImage(imgData,'PNG',10,position,imgW,imgH); heightLeft -= (pageH-20); }
+    pdf.save(`DK_${state.page}_${rangeLabel().replace(/\s/g,'')}.pdf`);
   });
-
-  return jsonOutput_(result);
 }
 
-/* ---------- 입력/수정/삭제 (대시보드에서 호출) ---------- */
-function doPost(e) {
-  const lock = LockService.getScriptLock();
-  lock.waitLock(10000);
-  try {
-    const body = JSON.parse(e.postData.contents);
-
-    if (body.action === 'appendSnapshot') return handleAppendSnapshot_(body);
-    if (body.action === 'deleteSnapshotRow') return handleDeleteSnapshotRow_(body);
-    if (body.action === 'delete') return handleDelete_(body);
-    return handleUpsert_(body);
-  } catch (err) {
-    return jsonOutput_({ ok: false, error: err.message });
-  } finally {
-    lock.releaseLock();
-  }
-}
-
-function handleUpsert_(body) {
-  const cfg = SHEET_CONFIG[body.channel];
-  if (!cfg) return jsonOutput_({ ok: false, error: '알 수 없는 채널: ' + body.channel });
-
-  const sheet = getOrCreateChannelSheet_(body.channel);
-  const date = normalizeDate_(body.date);
-  const rowIndex = findRow_(sheet, date);
-  const targetRow = rowIndex > 0 ? rowIndex : sheet.getLastRow() + 1;
-
-  const rowValues = cfg.keys.map(k => {
-    if (k === 'date') return date;
-    return body[k] !== undefined ? body[k] : '';
-  });
-  sheet.getRange(targetRow, 1, 1, rowValues.length).setValues([rowValues]);
-  sheet.getRange(targetRow, 1).setNumberFormat('@').setValue(date);
-  sheet.getRange(targetRow, cfg.keys.length + 1).setValue('대시보드');
-
-  return jsonOutput_({ ok: true, action: rowIndex > 0 ? 'updated' : 'appended' });
-}
-
-function handleDelete_(body) {
-  const cfg = SHEET_CONFIG[body.channel];
-  if (!cfg) return jsonOutput_({ ok: false, error: '알 수 없는 채널: ' + body.channel });
-  const sheet = getOrCreateChannelSheet_(body.channel);
-  const rowIndex = findRow_(sheet, normalizeDate_(body.date));
-  if (rowIndex > 0) sheet.deleteRow(rowIndex);
-  return jsonOutput_({ ok: true, action: 'deleted' });
-}
-
-/* ---------- 스냅샷(인기카테고리/콘텐츠) 입력/삭제 ---------- */
-function handleAppendSnapshot_(body) {
-  const cfg = SNAPSHOT_CONFIG[body.channel];
-  if (!cfg) return jsonOutput_({ ok: false, error: '알 수 없는 스냅샷 채널: ' + body.channel });
-  const sheet = getOrCreateSnapshotSheet_(body.channel);
-  const date = normalizeDate_(body.date);
-  sheet.appendRow([date, body.item, Number(body.views || 0)]);
-  sheet.getRange(sheet.getLastRow(), 1).setNumberFormat('@').setValue(date);
-  return jsonOutput_({ ok: true, action: 'appended' });
-}
-function handleDeleteSnapshotRow_(body) {
-  const cfg = SNAPSHOT_CONFIG[body.channel];
-  if (!cfg) return jsonOutput_({ ok: false, error: '알 수 없는 스냅샷 채널: ' + body.channel });
-  const sheet = getOrCreateSnapshotSheet_(body.channel);
-  const lastRow = sheet.getLastRow();
-  if (lastRow < 2) return jsonOutput_({ ok: true, action: 'noop' });
-  const values = sheet.getRange(2, 1, lastRow - 1, 2).getValues();
-  const targetDate = normalizeDate_(body.date);
-  for (let i = 0; i < values.length; i++) {
-    if (normalizeDate_(values[i][0]) === targetDate && String(values[i][1]) === String(body.item)) {
-      sheet.deleteRow(i + 2);
-      return jsonOutput_({ ok: true, action: 'deleted' });
-    }
-  }
-  return jsonOutput_({ ok: true, action: 'notfound' });
-}
-function readSnapshotSheet_(key) {
-  const cfg = SNAPSHOT_CONFIG[key];
-  const sheet = getOrCreateSnapshotSheet_(key);
-  const rows = [];
-  const lastRow = sheet.getLastRow();
-  if (lastRow < 2) return rows;
-  const values = sheet.getRange(2, 1, lastRow - 1, 3).getValues();
-  values.forEach(row => {
-    const date = normalizeDate_(row[0]);
-    if (!date || row[1] === '') return;
-    rows.push({ date, item: row[1], views: Number(row[2] || 0) });
-  });
-  return rows;
-}
-function getOrCreateSnapshotSheet_(key) {
-  const cfg = SNAPSHOT_CONFIG[key];
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sheet = ss.getSheetByName(cfg.name);
-  if (!sheet) {
-    sheet = ss.insertSheet(cfg.name);
-    sheet.appendRow(['날짜', cfg.itemLabel, '조회수']);
-    sheet.setFrozenRows(1);
-    sheet.getRange(2, 1, 999, 1).setNumberFormat('@');
-  }
-  return sheet;
-}
-
-/* ---------- 시트에서 사람이 직접 수정하면 자동으로 "시트"라고 표시 ---------- */
-function onEdit(e) {
-  try {
-    const sheet = e.range.getSheet();
-    const channel = Object.keys(SHEET_CONFIG).find(ch => SHEET_CONFIG[ch].name === sheet.getName());
-    if (!channel) return;
-    const cfg = SHEET_CONFIG[channel];
-    const inputSourceCol = cfg.keys.length + 1;
-
-    const startRow = e.range.getRow();
-    const endRow = e.range.getLastRow();
-    const startCol = e.range.getColumn();
-    const endCol = e.range.getLastColumn();
-
-    if (startCol <= inputSourceCol && endCol >= inputSourceCol && startCol === endCol) return;
-
-    for (let r = startRow; r <= endRow; r++) {
-      if (r < 2) continue;
-      sheet.getRange(r, inputSourceCol).setValue('시트');
-    }
-  } catch (err) {
-    // 조용히 무시
-  }
-}
-
-function getOrCreateChannelSheet_(channel) {
-  const cfg = SHEET_CONFIG[channel];
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sheet = ss.getSheetByName(cfg.name);
-  const fullHeader = cfg.headers.concat([INPUT_SOURCE_LABEL]);
-
-  if (!sheet) {
-    sheet = ss.insertSheet(cfg.name);
-    sheet.appendRow(fullHeader);
-    sheet.setFrozenRows(1);
-    sheet.getRange(2, 1, 999, 1).setNumberFormat('@');
-    return sheet;
-  }
-
-  // 헤더 행이 예전 구조(문의수 열, 중복 입력경로 열 등)로 어긋나 있을 수 있으므로 항상 정확히 맞춰줌
-  const currentHeader = sheet.getRange(1, 1, 1, fullHeader.length).getValues()[0];
-  const mismatch = fullHeader.some((h, i) => currentHeader[i] !== h);
-  if (mismatch) {
-    sheet.getRange(1, 1, 1, fullHeader.length).setValues([fullHeader]);
-  }
-  return sheet;
-}
-
-function findRow_(sheet, date) {
-  const lastRow = sheet.getLastRow();
-  if (lastRow < 2) return -1;
-  const dates = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
-  for (let i = 0; i < dates.length; i++) {
-    if (normalizeDate_(dates[i][0]) === date) return i + 2;
-  }
-  return -1;
-}
-
-function normalizeDate_(v) {
-  if (!v) return '';
-  if (v instanceof Date) return Utilities.formatDate(v, Session.getScriptTimeZone(), 'yyyy-MM-dd');
-  return String(v).trim();
-}
-
-function jsonOutput_(obj) {
-  return ContentService.createTextOutput(JSON.stringify(obj))
-    .setMimeType(ContentService.MimeType.JSON);
-}
+/* ---------- init ---------- */
+document.querySelector('.dropdown-item[data-page="home_overview"]').classList.add('active');
+loadAllData();
+setInterval(loadAllData, 3*60*1000);
+</script>
+</body>
+</html>
